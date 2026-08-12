@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "310808715575",
+    "project_id": "radio-saas-platform",
+    "storage_bucket": "radio-saas-platform.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310808715575:android:0d32362d65a19a896f3ab2",
+        "android_client_info": {
+          "package_name": "com.erancon.radio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW0nQtxz_vfrdTLTOZxzenuXR_dtngPPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310808715575:android:f59d106dc7faa4906f3ab2",
+        "android_client_info": {
+          "package_name": "com.example.radioapp2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW0nQtxz_vfrdTLTOZxzenuXR_dtngPPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

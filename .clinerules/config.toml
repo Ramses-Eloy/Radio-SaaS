@@ -1,0 +1,15 @@
+[system]
+version = "1.0.0"
+environment = "Radio-WhiteLabel"
+
+[guidelines]
+style = "concise"
+directness = "high"
+avoid_narration = true
+autonomous_collaboration = true
+unnecessary_comments = false
+
+[communication]
+language = "es"
+mode = "autonomous"
+verbosity = "minimal"

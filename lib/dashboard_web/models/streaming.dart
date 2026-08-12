@@ -1,0 +1,104 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:radio_whitelabel/dashboard_web/firestore/emisora_fields.dart';
+import 'package:radio_whitelabel/dashboard_web/utils/firestore_typed_value.dart';
+
+/// Documento en `streamings/{id}`.
+class Streaming {
+  const Streaming({
+    required this.id,
+    required this.nombre,
+    required this.urlVideo,
+    required this.logoUrl,
+    required this.colorHex,
+    this.colorSecundarioHex = '#35ACE5',
+    required this.showOnHome,
+    required this.mostrarProgramacion,
+    required this.playCount,
+    this.statsUpdatedAt,
+  });
+
+  final String id;
+  final String nombre;
+  final String urlVideo;
+  final String logoUrl;
+  final String colorHex;
+  final String colorSecundarioHex;
+  final bool showOnHome;
+  final bool mostrarProgramacion;
+  final int playCount;
+  final DateTime? statsUpdatedAt;
+
+  factory Streaming.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    final stats = d[EmisoraFields.stats] as Map<String, dynamic>? ?? {};
+    final ts = stats['updatedAt'] as Timestamp?;
+    final nombre = d[EmisoraFields.nombre] as String? ?? d['name'] as String? ?? 'Sin nombre';
+
+    return Streaming(
+      id: doc.id,
+      nombre: nombre,
+      urlVideo: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.urlVideo]),
+      logoUrl: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.logoUrl]),
+      colorHex: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.colorHex]),
+      colorSecundarioHex: d[EmisoraFields.colorSecundarioHex] as String? ?? FirestoreTypedValue.toFirestoreString(d[EmisoraFields.colorHex]),
+      showOnHome: FirestoreTypedValue.toFirestoreBool(d[EmisoraFields.showOnHome]),
+      mostrarProgramacion: d[EmisoraFields.mostrarProgramacion] as bool? ?? true,
+      playCount: (stats[EmisoraFields.statsPlayCount] as num?)?.toInt() ?? 0,
+      statsUpdatedAt: ts?.toDate(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nombre': nombre,
+        'urlVideo': urlVideo,
+        'logoUrl': logoUrl,
+        'colorHex': colorHex,
+        'colorSecundarioHex': colorSecundarioHex,
+        'showOnHome': showOnHome,
+        'mostrarProgramacion': mostrarProgramacion,
+        'playCount': playCount,
+        'statsUpdatedAt': statsUpdatedAt?.toIso8601String(),
+      };
+
+  factory Streaming.fromJson(Map<String, dynamic> json) {
+    return Streaming(
+      id: json['id'] as String? ?? '',
+      nombre: json['nombre'] as String? ?? '',
+      urlVideo: json['urlVideo'] as String? ?? '',
+      logoUrl: json['logoUrl'] as String? ?? '',
+      colorHex: json['colorHex'] as String? ?? '',
+      colorSecundarioHex: json['colorSecundarioHex'] as String? ?? json['colorHex'] as String? ?? '#35ACE5',
+      showOnHome: json['showOnHome'] as bool? ?? false,
+      mostrarProgramacion: json['mostrarProgramacion'] as bool? ?? true,
+      playCount: (json['playCount'] as num?)?.toInt() ?? 0,
+      statsUpdatedAt: json['statsUpdatedAt'] != null ? DateTime.tryParse(json['statsUpdatedAt'] as String) : null,
+    );
+  }
+
+  Streaming copyWith({
+    String? id,
+    String? nombre,
+    String? urlVideo,
+    String? logoUrl,
+    String? colorHex,
+    String? colorSecundarioHex,
+    bool? showOnHome,
+    bool? mostrarProgramacion,
+    int? playCount,
+    DateTime? statsUpdatedAt,
+  }) {
+    return Streaming(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      urlVideo: urlVideo ?? this.urlVideo,
+      logoUrl: logoUrl ?? this.logoUrl,
+      colorHex: colorHex ?? this.colorHex,
+      colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
+      showOnHome: showOnHome ?? this.showOnHome,
+      mostrarProgramacion: mostrarProgramacion ?? this.mostrarProgramacion,
+      playCount: playCount ?? this.playCount,
+      statsUpdatedAt: statsUpdatedAt ?? this.statsUpdatedAt,
+    );
+  }
+}
