@@ -1,6 +1,5 @@
 import 'dart:convert';
-// ignore: deprecated_member_use, avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// Web export has been moved to a conditional import in csv_export.dart
 import 'package:csv/csv.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -11,7 +10,7 @@ import 'package:radio_whitelabel/dashboard_web/models/streaming.dart';
 import 'package:radio_whitelabel/dashboard_web/services/client_data_store.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:radio_whitelabel/dashboard_web/utils/csv_export.dart';
 class EstadisticasWorkspace extends StatefulWidget {
   const EstadisticasWorkspace({
     super.key,
@@ -90,12 +89,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
     ];
     String csvData = csv.encode(rows);
     final bytes = utf8.encode(csvData);
-    final blob = html.Blob([bytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.AnchorElement(href: url)
-      ..setAttribute("download", "reporte_estadisticas.csv")
-      ..click();
-    html.Url.revokeObjectUrl(url);
+    downloadCsv("reporte_estadisticas.csv", bytes);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reporte Excel (CSV) generado')));
   }
 
