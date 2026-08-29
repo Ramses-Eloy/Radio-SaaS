@@ -34,6 +34,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
   final _nombreGrupo = TextEditingController();
   final _radioLabel = TextEditingController();
   final _tvLabel = TextEditingController();
+  final _scheduleLabel = TextEditingController();
   final _logoUrl = TextEditingController();
   final _splashUrl = TextEditingController();
   final _bannerHomeUrl = TextEditingController();
@@ -77,6 +78,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _nombreGrupo.text = i.nombreGrupo;
     _radioLabel.text = i.radioLabel;
     _tvLabel.text = i.tvLabel;
+    _scheduleLabel.text = i.scheduleLabel;
     _logoUrl.text = i.logoUrl;
     _splashUrl.text = i.splashUrl;
     _bannerHomeUrl.text = i.bannerHomeUrl;
@@ -89,6 +91,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _nombreGrupo.dispose();
     _radioLabel.dispose();
     _tvLabel.dispose();
+    _scheduleLabel.dispose();
     _logoUrl.dispose();
     _splashUrl.dispose();
     _bannerHomeUrl.dispose();
@@ -218,6 +221,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
         nombreGrupo: _nombreGrupo.text.trim(),
         radioLabel: _radioLabel.text.trim(),
         tvLabel: _tvLabel.text.trim(),
+        scheduleLabel: _scheduleLabel.text.trim(),
         logoUrl: _logoUrl.text.trim(),
         colorHex: widget.info.colorHex,
         splashUrl: splashUrl,
@@ -231,6 +235,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
           nombreGrupo: _nombreGrupo.text.trim(),
           radioLabel: _radioLabel.text.trim(),
           tvLabel: _tvLabel.text.trim(),
+          scheduleLabel: _scheduleLabel.text.trim(),
           logoUrl: _logoUrl.text.trim(),
           colorHex: widget.info.colorHex,
           splashUrl: splashUrl,
@@ -376,7 +381,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                   controller: _nombreGrupo,
                   decoration: const InputDecoration(
                     labelText: 'Nombre del grupo / marca',
-                    helperText: 'Se muestra como título principal en la app.',
+                    helperText: 'Se muestra en el encabezado del panel web y en la pantalla de Ajustes de la app móvil.',
                     hintText: 'Ej. Grupo SIRA',
                   ),
                 ),
@@ -411,10 +416,24 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _scheduleLabel,
+                  decoration: const InputDecoration(
+                    labelText: 'Texto del botón “Programación”',
+                    helperText: 'Nombre del botón de Programación en la página principal.',
+                    hintText: 'Ej. Programación',
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Imagen de marca',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Este logotipo identifica a tu empresa/grupo en el encabezado del Dashboard. Los logotipos individuales de cada radio y canal se configuran en sus respectivas secciones.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 BrandImageUploadZone(

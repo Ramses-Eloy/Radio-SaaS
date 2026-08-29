@@ -112,7 +112,7 @@ class MobileAppPreview extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(16),
                                   child: Image.network(
                                     logoUrl,
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) => _buildPlaceholderLogo(primaryColor),
                                   ),
                                 )
@@ -177,30 +177,35 @@ class MobileAppPreview extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      // Progress bar
                       if (!isStreaming)
                         Container(
-                          height: 4,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: scheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(2),
+                            color: Colors.redAccent.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.redAccent, width: 1),
                           ),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              width: 80,
-                              decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(2),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.circle, color: Colors.redAccent, size: 8),
+                              SizedBox(width: 6),
+                              Text(
+                                'EN VIVO',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(isStreaming ? Icons.cast : Icons.skip_previous, color: scheme.onSurfaceVariant),
+                          Icon(isStreaming ? Icons.cast : Icons.volume_up, color: scheme.onSurfaceVariant),
                           Container(
                             width: 64,
                             height: 64,
@@ -216,7 +221,12 @@ class MobileAppPreview extends StatelessWidget {
                                   color: primaryColor.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
-                                )
+                                ),
+                                BoxShadow(
+                                  color: primaryColor.withValues(alpha: 0.1),
+                                  blurRadius: 30,
+                                  spreadRadius: 10,
+                                ),
                               ],
                             ),
                             child: const Icon(
@@ -225,7 +235,7 @@ class MobileAppPreview extends StatelessWidget {
                               size: 32,
                             ),
                           ),
-                          Icon(isStreaming ? Icons.fullscreen : Icons.skip_next, color: scheme.onSurfaceVariant),
+                          Icon(isStreaming ? Icons.fullscreen : Icons.share, color: scheme.onSurfaceVariant),
                         ],
                       ),
                     ],

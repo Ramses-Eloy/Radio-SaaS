@@ -22,6 +22,7 @@ import 'screens/settings_screen.dart';
 import 'widgets/splash_ad_dialog.dart';
 import 'widgets/persistent_bottom_banner.dart';
 import 'widgets/floating_pip_overlay.dart';
+import 'services/telemetry_service.dart';
 
 // Web dashboard
 import 'admin/admin_dashboard_screen.dart';
@@ -250,12 +251,17 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
       final stationProvider = context.read<StationProvider>();
       stationProvider.addListener(_syncAdConfig);
       _syncAdConfig(); // Sync immediately if data is already loaded
+
+      // Initialize telemetry batching with current appId
+      TelemetryService().initialize(appId: stationProvider.activeAppId);
     });
   }
 
   @override
   void dispose() {
     context.read<StationProvider>().removeListener(_syncAdConfig);
+    // Flush any pending telemetry data before the app closes
+    TelemetryService().flushAndDispose();
     super.dispose();
   }
 
@@ -272,12 +278,18 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
     // Show splash only once, and only if splash is enabled and has a URL
     if (!_splashShown && sp.splashEnabled && sp.splashUrl.isNotEmpty) {
       _splashShown = true;
+      sp.setSplashShowing(true);
       showDialog(
         context: context,
         barrierDismissible: false,
         useSafeArea: false,
         builder: (_) => SplashAdDialog(),
-      );
+      ).then((_) {
+        // Safe to check mounted, but sp is a reference we already have.
+        if (mounted) {
+          context.read<StationProvider>().setSplashShowing(false);
+        }
+      });
     }
   }
 
@@ -303,36 +315,38 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const PersistentBottomBanner(),
-          NavigationBar(
-            height: 65,
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (index) {
+          BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            currentIndex: _currentIndex,
+            onTap: (index) {
               setState(() {
                 _currentIndex = index;
               });
             },
             backgroundColor: activeTheme.cardColor,
-            indicatorColor: activeTheme.primaryColor.withValues(alpha: 0.25),
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: [
-              NavigationDestination(
+            selectedItemColor: Colors.amber,
+            unselectedItemColor: Colors.grey,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+            items: [
+              BottomNavigationBarItem(
                 icon: const Icon(Icons.radio_outlined),
-                selectedIcon: const Icon(Icons.radio, color: Colors.amber),
+                activeIcon: const Icon(Icons.radio),
                 label: stationProvider.radioLabel.split(' ').first,
               ),
-              const NavigationDestination(
-                icon: Icon(Icons.calendar_month_outlined),
-                selectedIcon: Icon(Icons.calendar_month, color: Colors.amber),
-                label: 'Programación',
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.calendar_month_outlined),
+                activeIcon: const Icon(Icons.calendar_month),
+                label: stationProvider.scheduleLabel,
               ),
-              NavigationDestination(
+              BottomNavigationBarItem(
                 icon: const Icon(Icons.ondemand_video_outlined),
-                selectedIcon: const Icon(Icons.ondemand_video, color: Colors.amber),
+                activeIcon: const Icon(Icons.ondemand_video),
                 label: stationProvider.tvLabel.split(' ').first,
               ),
-              const NavigationDestination(
+              const BottomNavigationBarItem(
                 icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings, color: Colors.amber),
+                activeIcon: Icon(Icons.settings),
                 label: 'Ajustes',
               ),
             ],

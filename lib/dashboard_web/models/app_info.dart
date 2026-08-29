@@ -8,6 +8,7 @@ class AppInfo {
     required this.nombreGrupo,
     required this.radioLabel,
     required this.tvLabel,
+    required this.scheduleLabel,
     required this.logoUrl,
     required this.colorHex,
     required this.splashUrl,
@@ -20,6 +21,7 @@ class AppInfo {
   final String nombreGrupo;
   final String radioLabel;
   final String tvLabel;
+  final String scheduleLabel;
   final String logoUrl;
   final String colorHex;
   final String splashUrl;
@@ -34,6 +36,7 @@ class AppInfo {
       nombreGrupo: d[EmisoraFields.nombreGrupo] as String? ?? '',
       radioLabel: d[EmisoraFields.radioLabel] as String? ?? '',
       tvLabel: d[EmisoraFields.tvLabel] as String? ?? '',
+      scheduleLabel: d[EmisoraFields.scheduleLabel] as String? ?? 'Programación',
       logoUrl: d[EmisoraFields.logoUrl] as String? ?? '',
       colorHex: d[EmisoraFields.colorHex] as String? ?? '',
       splashUrl: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.splashUrl]),
@@ -52,6 +55,7 @@ class AppInfo {
         'nombreGrupo': nombreGrupo,
         'radioLabel': radioLabel,
         'tvLabel': tvLabel,
+        'scheduleLabel': scheduleLabel,
         'logoUrl': logoUrl,
         'colorHex': colorHex,
         'splashUrl': splashUrl,
@@ -66,6 +70,7 @@ class AppInfo {
       nombreGrupo: json['nombreGrupo'] as String? ?? '',
       radioLabel: json['radioLabel'] as String? ?? '',
       tvLabel: json['tvLabel'] as String? ?? '',
+      scheduleLabel: json['scheduleLabel'] as String? ?? 'Programación',
       logoUrl: json['logoUrl'] as String? ?? '',
       colorHex: json['colorHex'] as String? ?? '',
       splashUrl: json['splashUrl'] as String? ?? '',
@@ -80,6 +85,7 @@ class AppInfo {
     String? nombreGrupo,
     String? radioLabel,
     String? tvLabel,
+    String? scheduleLabel,
     String? logoUrl,
     String? colorHex,
     String? splashUrl,
@@ -92,6 +98,7 @@ class AppInfo {
       nombreGrupo: nombreGrupo ?? this.nombreGrupo,
       radioLabel: radioLabel ?? this.radioLabel,
       tvLabel: tvLabel ?? this.tvLabel,
+      scheduleLabel: scheduleLabel ?? this.scheduleLabel,
       logoUrl: logoUrl ?? this.logoUrl,
       colorHex: colorHex ?? this.colorHex,
       splashUrl: splashUrl ?? this.splashUrl,

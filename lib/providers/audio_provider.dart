@@ -46,7 +46,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     final displayTitle = programTitle != null && programTitle.isNotEmpty ? programTitle : stationName;
     final displaySub = hostName != null && hostName.isNotEmpty
-        ? 'Con $hostName'
+        ? hostName
         : 'En Vivo';
 
     Uri? artUri;
@@ -58,19 +58,15 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       await _audioPlayer.setAudioSource(
-        ConcatenatingAudioSource(
-          children: [
-            AudioSource.uri(
-              Uri.parse(streamUrl),
-              tag: MediaItem(
-                id: stationId,
-                album: stationName,
-                title: displayTitle,
-                artist: displaySub,
-                artUri: artUri,
-              ),
-            ),
-          ],
+        AudioSource.uri(
+          Uri.parse(streamUrl),
+          tag: MediaItem(
+            id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
+            album: stationName,
+            title: displayTitle,
+            artist: displaySub,
+            artUri: artUri,
+          ),
         ),
         preload: false,
       );
@@ -97,7 +93,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
 
       final displayTitle = programTitle != null && programTitle.isNotEmpty ? programTitle : stationName;
       final displaySub = hostName != null && hostName.isNotEmpty
-          ? 'Con $hostName'
+          ? hostName
           : 'En Vivo';
 
       Uri? artUri;
@@ -107,20 +103,17 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         } catch (_) {}
       }
 
+      await _audioPlayer.stop(); // Stop before changing source to force notification refresh
       await _audioPlayer.setAudioSource(
-        ConcatenatingAudioSource(
-          children: [
-            AudioSource.uri(
-              Uri.parse(streamUrl),
-              tag: MediaItem(
-                id: stationId,
-                album: stationName,
-                title: displayTitle,
-                artist: displaySub,
-                artUri: artUri,
-              ),
-            ),
-          ],
+        AudioSource.uri(
+          Uri.parse(streamUrl),
+          tag: MediaItem(
+            id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
+            album: stationName,
+            title: displayTitle,
+            artist: displaySub,
+            artUri: artUri,
+          ),
         ),
       );
       await _audioPlayer.play();

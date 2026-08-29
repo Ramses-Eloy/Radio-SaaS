@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:radio_whitelabel/dashboard_web/models/emisora.dart';
 import 'package:radio_whitelabel/dashboard_web/models/streaming.dart';
 import 'package:radio_whitelabel/dashboard_web/services/client_data_store.dart';
+import 'package:radio_whitelabel/dashboard_web/services/stats_aggregation_service.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/csv_export.dart';
@@ -32,12 +33,61 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
   bool _targetLoaded = false;
   String _timeFilter = '24H';
 
+  // ── Stats Aggregation ──────────────────────────────
+  final StatsAggregationService _statsService = StatsAggregationService();
+  StatsSummary? _stats;
+  bool _statsLoading = false;
+
   String get _targetPrefKey => 'estadisticas.target.${widget.ownerEmail}.${widget.appId}';
 
   @override
   void initState() {
     super.initState();
     _loadLastTarget();
+    _fetchStats();
+  }
+
+  /// Maps time filter label to number of days.
+  int get _daysForFilter {
+    switch (_timeFilter) {
+      case '1H': return 1;    // Show today's data
+      case '24H': return 1;
+      case '7D': return 7;
+      case '30D': return 30;
+      default: return 1;
+    }
+  }
+
+  Future<void> _fetchStats() async {
+    if (_statsLoading) return;
+    setState(() => _statsLoading = true);
+    try {
+      final summary = await _statsService.fetchStats(
+        appId: widget.appId,
+        days: _daysForFilter,
+      );
+      if (mounted) {
+        setState(() {
+          _stats = summary;
+          _statsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _statsLoading = false);
+    }
+  }
+
+  void _setTimeFilter(String filter) {
+    if (_timeFilter == filter) return;
+    setState(() => _timeFilter = filter);
+    _fetchStats();
+  }
+
+  /// Formats large numbers with K/M suffixes for display.
+  String _formatNumber(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
   }
 
   List<_TargetOption> _targets(List<Emisora> radios, List<Streaming> streamings) {
@@ -79,14 +129,42 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
     } catch (_) {}
   }
 
-  void _exportCsv(BuildContext context) {
-    // Datos simulados (pronto vendrán de Firebase)
-    List<List<dynamic>> rows = [
-      ['Estacion / Streaming', 'Oyentes Unicos', 'Duracion Promedio', 'Picos'],
-      ['La Movida', 1200, '45 min', 1500],
-      ['RetroMusic', 800, '30 min', 1000],
-      ['Streaming Beta', 300, '20 min', 400],
+  List<List<dynamic>> _buildExportRows() {
+    final data = widget.dataStore.data;
+    final stats = _stats;
+    final rows = <List<dynamic>>[
+      ['Nombre', 'Tipo', 'Reproducciones', 'Clics Publicitarios', 'Período']
     ];
+    if (data == null || stats == null) return rows;
+
+    if (_targetId == 'GLOBAL_ALL') {
+      for (final r in data.radios) {
+        final st = stats.stationTotals[r.id];
+        rows.add([r.nombre, 'Radio', st?['plays'] ?? 0, st?['adClicks'] ?? 0, _timeFilter]);
+      }
+      for (final s in data.streamings) {
+        final st = stats.stationTotals[s.id];
+        rows.add([s.nombre, 'Video', st?['plays'] ?? 0, st?['adClicks'] ?? 0, _timeFilter]);
+      }
+    } else {
+      for (final r in data.radios) {
+        if (r.id == _targetId) {
+          final st = stats.stationTotals[r.id];
+          rows.add([r.nombre, 'Radio', st?['plays'] ?? 0, st?['adClicks'] ?? 0, _timeFilter]);
+        }
+      }
+      for (final s in data.streamings) {
+        if (s.id == _targetId) {
+          final st = stats.stationTotals[s.id];
+          rows.add([s.nombre, 'Video', st?['plays'] ?? 0, st?['adClicks'] ?? 0, _timeFilter]);
+        }
+      }
+    }
+    return rows;
+  }
+
+  void _exportCsv(BuildContext context) {
+    final rows = _buildExportRows();
     String csvData = csv.encode(rows);
     final bytes = utf8.encode(csvData);
     downloadCsv("reporte_estadisticas.csv", bytes);
@@ -105,12 +183,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
               pw.SizedBox(height: 20),
               pw.TableHelper.fromTextArray(
                 context: context,
-                data: const <List<String>>[
-                  <String>['Estacion / Streaming', 'Oyentes Unicos', 'Duracion Promedio', 'Picos'],
-                  <String>['La Movida', '1200', '45 min', '1500'],
-                  <String>['RetroMusic', '800', '30 min', '1000'],
-                  <String>['Streaming Beta', '300', '20 min', '400'],
-                ],
+                data: _buildExportRows().map((row) => row.map((e) => e.toString()).toList()).toList(),
               ),
             ],
           );
@@ -233,16 +306,27 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
 
   Widget _buildMainChart() {
     final scheme = Theme.of(context).colorScheme;
-    // Mock Data for the chart
-    final spots = const [
-      FlSpot(0, 0),
-      FlSpot(4, 0),
-      FlSpot(8, 0),
-      FlSpot(12, 0),
-      FlSpot(16, 0),
-      FlSpot(20, 0),
-      FlSpot(24, 0),
-    ];
+
+    // Build spots from aggregated hourly data
+    List<FlSpot> spots;
+    if (_stats != null && _stats!.dailyBreakdown.isNotEmpty) {
+      if (_daysForFilter == 1) {
+        // Hourly chart for today (0-23h)
+        final today = _stats!.dailyBreakdown.first;
+        spots = List.generate(24, (i) {
+          final plays = today.hourlyPlays[i.toString()] ?? 0;
+          return FlSpot(i.toDouble(), plays.toDouble());
+        });
+      } else {
+        // Daily chart (one point per day, newest first so reverse)
+        final days = _stats!.dailyBreakdown.reversed.toList();
+        spots = List.generate(days.length, (i) {
+          return FlSpot(i.toDouble(), days[i].totalPlays.toDouble());
+        });
+      }
+    } else {
+      spots = List.generate(24, (i) => FlSpot(i.toDouble(), 0));
+    }
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -262,12 +346,12 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
               Row(
-                children: ['1H', '24H', '7D'].map((f) {
+                children: ['24H', '7D', '30D'].map((f) {
                   final sel = _timeFilter == f;
                   return Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: InkWell(
-                      onTap: () => setState(() => _timeFilter = f),
+                      onTap: () => _setTimeFilter(f),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -417,8 +501,42 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
     );
   }
 
+  // Country code → flag emoji + display name mapping
+  static const _countryInfo = <String, List<String>>{
+    'PA': ['🇵🇦', 'Panamá'],
+    'US': ['🇺🇸', 'EE.UU.'],
+    'MX': ['🇲🇽', 'México'],
+    'CO': ['🇨🇴', 'Colombia'],
+    'CR': ['🇨🇷', 'Costa Rica'],
+    'ES': ['🇪🇸', 'España'],
+    'AR': ['🇦🇷', 'Argentina'],
+    'VE': ['🇻🇪', 'Venezuela'],
+    'CL': ['🇨🇱', 'Chile'],
+    'PE': ['🇵🇪', 'Perú'],
+    'EC': ['🇪🇨', 'Ecuador'],
+    'DO': ['🇩🇴', 'R. Dom.'],
+    'GT': ['🇬🇹', 'Guatemala'],
+    'HN': ['🇭🇳', 'Honduras'],
+    'SV': ['🇸🇻', 'El Salvador'],
+    'NI': ['🇳🇮', 'Nicaragua'],
+    'BR': ['🇧🇷', 'Brasil'],
+    'CA': ['🇨🇦', 'Canadá'],
+    'GB': ['🇬🇧', 'R. Unido'],
+    'FR': ['🇫🇷', 'Francia'],
+    'DE': ['🇩🇪', 'Alemania'],
+    'XX': ['🌐', 'Desconocido'],
+  };
+
   Widget _buildGeolocationPanel() {
     final scheme = Theme.of(context).colorScheme;
+    final geo = _stats?.geo ?? {};
+    final total = geo.values.fold<int>(0, (a, b) => a + b);
+
+    // Sort by count descending, take top 5
+    final sorted = geo.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top5 = sorted.take(5).toList();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -435,15 +553,26 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Basado en IPs concurrentes',
+            'Basado en reproducciones por país ($_timeFilter)',
             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 24),
-          _buildGeoBar('🇵🇦', 'Panamá', 0.0, scheme.primary),
+          if (top5.isEmpty)
+            Text(
+              'Sin datos geográficos aún.',
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+            )
+          else
+            ...top5.map((entry) {
+              final info = _countryInfo[entry.key] ?? ['🌐', entry.key];
+              final percent = total > 0 ? entry.value / total : 0.0;
+              return _buildGeoBar(info[0], info[1], percent, scheme.primary);
+            }),
         ],
       ),
     );
   }
+
 
   Widget _buildActiveNodes(List<_TargetOption> targets) {
     final scheme = Theme.of(context).colorScheme;
@@ -693,17 +822,61 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // KPIs
-                                Flex(
-                                  direction: isMobile ? Axis.vertical : Axis.horizontal,
-                                  children: [
-                                    _buildKPICard('Oyentes Activos', '0', '0%', true, scheme.primary, const [0, 0, 0, 0, 0, 0, 0], Icons.graphic_eq),
-                                    SizedBox(width: isMobile ? 0 : 16, height: isMobile ? 16 : 0),
-                                    _buildKPICard('Reproducciones (24h)', '0', '0%', true, scheme.tertiary, const [0, 0, 0, 0, 0, 0, 0], Icons.play_circle_outline),
-                                    SizedBox(width: isMobile ? 0 : 16, height: isMobile ? 16 : 0),
-                                    _buildKPICard('Clics Publicitarios', '0', '0%', false, scheme.secondary, const [0, 0, 0, 0, 0, 0, 0], Icons.campaign_outlined),
-                                  ],
-                                ),
+                                // KPIs — fed by aggregated stats
+                                Builder(builder: (_) {
+                                  final s = _stats ?? StatsSummary.empty();
+                                  // Build sparkline trend from daily breakdown (up to 7 points)
+                                  final dailyPlays = s.dailyBreakdown.reversed
+                                      .take(7)
+                                      .map((d) => d.totalPlays.toDouble())
+                                      .toList();
+                                  final dailyAdClicks = s.dailyBreakdown.reversed
+                                      .take(7)
+                                      .map((d) => d.totalAdClicks.toDouble())
+                                      .toList();
+                                  final dailySocial = s.dailyBreakdown.reversed
+                                      .take(7)
+                                      .map((d) => d.totalSocialClicks.toDouble())
+                                      .toList();
+                                  final trendPlays = dailyPlays.isNotEmpty ? dailyPlays : const [0.0];
+                                  final trendAd = dailyAdClicks.isNotEmpty ? dailyAdClicks : const [0.0];
+                                  final trendSocial = dailySocial.isNotEmpty ? dailySocial : const [0.0];
+
+                                  return Flex(
+                                    direction: isMobile ? Axis.vertical : Axis.horizontal,
+                                    children: [
+                                      _buildKPICard(
+                                        'Reproducciones ($_timeFilter)',
+                                        _formatNumber(s.totalPlays),
+                                        _statsLoading ? '...' : _timeFilter,
+                                        true,
+                                        scheme.primary,
+                                        trendPlays,
+                                        Icons.play_circle_outline,
+                                      ),
+                                      SizedBox(width: isMobile ? 0 : 16, height: isMobile ? 16 : 0),
+                                      _buildKPICard(
+                                        'Clics Publicitarios',
+                                        _formatNumber(s.totalAdClicks),
+                                        _statsLoading ? '...' : _timeFilter,
+                                        s.totalAdClicks > 0,
+                                        scheme.tertiary,
+                                        trendAd,
+                                        Icons.campaign_outlined,
+                                      ),
+                                      SizedBox(width: isMobile ? 0 : 16, height: isMobile ? 16 : 0),
+                                      _buildKPICard(
+                                        'Interacciones Sociales',
+                                        _formatNumber(s.totalSocialClicks),
+                                        _statsLoading ? '...' : _timeFilter,
+                                        s.totalSocialClicks > 0,
+                                        scheme.secondary,
+                                        trendSocial,
+                                        Icons.share_outlined,
+                                      ),
+                                    ],
+                                  );
+                                }),
                                 const SizedBox(height: 24),
                                 _buildMainChart(),
                                 const SizedBox(height: 24),

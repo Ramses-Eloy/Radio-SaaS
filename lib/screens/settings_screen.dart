@@ -162,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ListTile(
                     leading: Icon(Icons.info_outline, color: activeTheme.secondaryColor),
                     title: Text(stationProvider.brandName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Plataforma SaaS Radio White-Label v1.0.0'),
+                    subtitle: const Text('Versión 1.0.0'),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(

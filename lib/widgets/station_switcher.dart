@@ -11,7 +11,6 @@ class StationSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stationProvider = context.watch<StationProvider>();
-    final audioProvider = context.watch<AudioProvider>();
     final stations = stationProvider.stations;
     final activeTheme = stationProvider.activeThemeConfig;
 
@@ -26,8 +25,12 @@ class StationSwitcher extends StatelessWidget {
           final isSelected = index == stationProvider.selectedStationIndex;
 
           return GestureDetector(
-            onTap: () {
-              stationProvider.selectStation(index);
+            onTap: () async {
+              final audioProvider = context.read<AudioProvider>();
+              final stationProvider = context.read<StationProvider>();
+              
+              await stationProvider.selectStation(index);
+              
               final liveProgram = stationProvider.currentStationPrograms.firstWhere(
                 (p) => p.isLiveNow,
                 orElse: () => Program(
@@ -43,25 +46,14 @@ class StationSwitcher extends StatelessWidget {
                 ),
               );
 
-              if (audioProvider.isPlaying) {
-                audioProvider.playStream(
-                  streamUrl: station.streamUrl,
-                  stationName: station.name,
-                  stationId: station.id,
-                  logoUrl: station.logoUrl,
-                  programTitle: liveProgram.title,
-                  hostName: liveProgram.hostName,
-                );
-              } else {
-                audioProvider.updateStationMetadata(
-                  streamUrl: station.streamUrl,
-                  stationName: station.name,
-                  stationId: station.id,
-                  logoUrl: station.logoUrl,
-                  programTitle: liveProgram.title,
-                  hostName: liveProgram.hostName,
-                );
-              }
+              audioProvider.playStream(
+                streamUrl: station.streamUrl,
+                stationName: station.name,
+                stationId: station.id,
+                logoUrl: station.logoUrl,
+                programTitle: liveProgram.title,
+                hostName: liveProgram.hostName,
+              );
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
@@ -100,10 +92,13 @@ class StationSwitcher extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: AppCachedImage(
-                      imageUrl: station.logoUrl,
-                      fit: BoxFit.contain,
-                      fallbackIconColor: activeTheme.primaryColor,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: AppCachedImage(
+                        imageUrl: station.logoUrl,
+                        fit: BoxFit.contain,
+                        fallbackIconColor: activeTheme.primaryColor,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),

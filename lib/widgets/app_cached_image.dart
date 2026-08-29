@@ -10,6 +10,7 @@ class AppCachedImage extends StatelessWidget {
   final Widget? errorWidget;
   final Color? fallbackIconColor;
   final double fallbackIconSize;
+  final Duration fadeInDuration;
 
   const AppCachedImage({
     super.key,
@@ -21,6 +22,7 @@ class AppCachedImage extends StatelessWidget {
     this.errorWidget,
     this.fallbackIconColor,
     this.fallbackIconSize = 24.0,
+    this.fadeInDuration = const Duration(milliseconds: 250),
   });
 
   @override
@@ -35,6 +37,7 @@ class AppCachedImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      fadeInDuration: fadeInDuration,
       placeholder: (context, url) =>
           placeholder ??
           Center(

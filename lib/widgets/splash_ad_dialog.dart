@@ -65,21 +65,10 @@ class _SplashAdDialogState extends State<SplashAdDialog> {
           AppCachedImage(
             imageUrl: campaign.splashImageUrl,
             fit: BoxFit.cover,
+            fadeInDuration: Duration.zero,
             fallbackIconSize: 80,
             fallbackIconColor: Colors.amber,
-            placeholder: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.amber),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Cargando...',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
+            placeholder: const SizedBox.shrink(),
           ),
 
           // Top Skip Button overlay

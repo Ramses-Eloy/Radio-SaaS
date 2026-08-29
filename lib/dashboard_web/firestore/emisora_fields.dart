@@ -47,6 +47,7 @@ abstract final class EmisoraFields {
   static const String nombreGrupo = 'nombre_grupo';
   static const String radioLabel = 'radio_label';
   static const String tvLabel = 'tv_label';
+  static const String scheduleLabel = 'schedule_label';
   static const String youtubeUrl = 'youtube_url';
 
   static const String splashUrl = 'splash_url';

@@ -104,7 +104,7 @@ class ScheduleScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Con ${program.hostName}',
+                        program.hostName,
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,

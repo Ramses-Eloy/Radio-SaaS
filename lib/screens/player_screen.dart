@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -50,6 +51,8 @@ class _PlayerScreenState extends State<PlayerScreen>
   void _handleAlertUpdate() {
     if (!mounted || _alertDialogShowing) return;
     final stationProvider = context.read<StationProvider>();
+    if (stationProvider.isSplashShowing) return;
+    
     final msg = stationProvider.flashInformativoMessage;
     if (msg != null && msg.isNotEmpty) {
       _showAvanceInformativo(msg);
@@ -60,48 +63,31 @@ class _PlayerScreenState extends State<PlayerScreen>
     if (!mounted || _alertDialogShowing) return;
     _alertDialogShowing = true;
     final stationProvider = context.read<StationProvider>();
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.campaign, color: Colors.amber, size: 28),
-            SizedBox(width: 8),
-            Text(
-              'AVANCE INFORMATIVO',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          msg,
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () {
-              stationProvider.clearFlashInformativo();
-              Navigator.of(ctx).pop();
+      builder: (ctx) => _AvanceInformativoDialog(
+        message: msg,
+        onDismiss: () {
+          // Log as ad_click (avance informativo acknowledgement)
+          TelemetryService().logEvent(
+            eventType: 'ad_click',
+            stationId: stationProvider.currentStation.id,
+            metadata: {
+              'adType': 'avance_informativo',
+              'action': 'entendido',
             },
-            child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
+          );
+          stationProvider.clearFlashInformativo();
+          Navigator.of(ctx).pop();
+        },
       ),
     ).whenComplete(() {
       _alertDialogShowing = false;
     });
   }
+
 
   Future<void> _launchUrlHelper(BuildContext context, String urlString, String eventType) async {
     final stationProvider = context.read<StationProvider>();
@@ -122,12 +108,28 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   Future<void> _launchWhatsApp(BuildContext context, String phoneOrUrl) async {
-    String url = phoneOrUrl;
-    if (!phoneOrUrl.startsWith('http')) {
-      final cleanPhone = phoneOrUrl.replaceAll(RegExp(r'[^\d+]'), '');
-      url = 'https://wa.me/$cleanPhone?text=Hola%20Radio!%20Escuchando%20en%20vivo...';
+    final stationProvider = context.read<StationProvider>();
+    final cleanPhone = phoneOrUrl.replaceAll(RegExp(r'[^\d+]'), '');
+    final text = Uri.encodeComponent('Hola Radio! Escuchando en vivo...');
+
+    final whatsappAppUri = Uri.parse('whatsapp://send?phone=$cleanPhone&text=$text');
+    final whatsappWebUri = Uri.parse('https://wa.me/$cleanPhone?text=$text');
+
+    TelemetryService().logEvent(
+      eventType: 'whatsapp_click',
+      stationId: stationProvider.currentStation.id,
+      targetUrl: 'whatsapp://send?phone=$cleanPhone',
+    );
+
+    if (await canLaunchUrl(whatsappAppUri)) {
+      await launchUrl(whatsappAppUri, mode: LaunchMode.externalApplication);
+    } else if (await canLaunchUrl(whatsappWebUri)) {
+      await launchUrl(whatsappWebUri, mode: LaunchMode.externalApplication);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo abrir WhatsApp para: $phoneOrUrl')),
+      );
     }
-    await _launchUrlHelper(context, url, 'whatsapp_click');
   }
 
   Future<void> _launchPhoneCall(BuildContext context, String phone) async {
@@ -178,10 +180,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                 color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: AppCachedImage(
-                imageUrl: currentStation.logoUrl,
-                fit: BoxFit.contain,
-                fallbackIconColor: activeTheme.primaryColor,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AppCachedImage(
+                  imageUrl: currentStation.logoUrl,
+                  fit: BoxFit.contain,
+                  fallbackIconColor: activeTheme.primaryColor,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -313,7 +318,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  liveProgram != null ? 'Con ${liveProgram.hostName}' : currentStation.slogan,
+                  liveProgram != null && liveProgram.hostName.isNotEmpty ? liveProgram.hostName : currentStation.slogan,
                   style: TextStyle(
                     fontSize: 14,
                     color: activeTheme.primaryColor,
@@ -375,29 +380,45 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                 // Direct Contact Actions (WhatsApp Cabina & Llamar a Cabina)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                        onPressed: () => _launchWhatsApp(context, currentStation.whatsappNumber),
+                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'WhatsApp Cabina', 
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ),
                       ),
-                      onPressed: () => _launchWhatsApp(context, currentStation.whatsappNumber),
-                      icon: const Icon(Icons.chat_bubble_outline),
-                      label: const Text('WhatsApp Cabina', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: activeTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: activeTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                        onPressed: () => _launchPhoneCall(context, currentStation.phoneNumber),
+                        icon: const Icon(Icons.phone_in_talk, size: 16),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Llamar a Cabina', 
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ),
                       ),
-                      onPressed: () => _launchPhoneCall(context, currentStation.phoneNumber),
-                      icon: const Icon(Icons.phone_in_talk),
-                      label: const Text('Llamar a Cabina', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -506,6 +527,123 @@ class _PlayerScreenState extends State<PlayerScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Avance Informativo Dialog with 5s countdown
+// and animated progress bar
+// ─────────────────────────────────────────────
+class _AvanceInformativoDialog extends StatefulWidget {
+  const _AvanceInformativoDialog({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  State<_AvanceInformativoDialog> createState() => _AvanceInformativoDialogState();
+}
+
+class _AvanceInformativoDialogState extends State<_AvanceInformativoDialog>
+    with SingleTickerProviderStateMixin {
+  static const _durationSeconds = 5;
+  late AnimationController _progressController;
+  Timer? _autoDismissTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: _durationSeconds),
+    )..forward();
+
+    _autoDismissTimer = Timer(const Duration(seconds: _durationSeconds), () {
+      if (mounted) widget.onDismiss();
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoDismissTimer?.cancel();
+    _progressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1E293B),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Row(
+        children: [
+          Icon(Icons.campaign, color: Colors.amber, size: 28),
+          SizedBox(width: 8),
+          Text(
+            'AVANCE INFORMATIVO',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            widget.message,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          // Countdown progress bar
+          AnimatedBuilder(
+            animation: _progressController,
+            builder: (context, child) {
+              final remaining = (_durationSeconds * (1 - _progressController.value)).ceil();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: 1.0 - _progressController.value,
+                      minHeight: 6,
+                      backgroundColor: Colors.white12,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Se cierra en ${remaining}s',
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber,
+            foregroundColor: Colors.black,
+          ),
+          onPressed: widget.onDismiss,
+          child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
     );
   }
 }

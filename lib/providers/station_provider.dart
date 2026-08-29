@@ -31,17 +31,31 @@ class StationProvider extends ChangeNotifier {
   bool _splashEnabled = true;
   int _splashDurationSec = 5;
   String? _flashInformativoMessage;
+  bool _isSplashShowing = false;
+  String _scheduleLabel = 'Programación';
 
   String get brandName => _brandName;
   String get brandEmail => _brandEmail;
   String get brandLogoUrl => _brandLogoUrl;
   String get radioLabel => _radioLabel;
   String get tvLabel => _tvLabel;
+  String get scheduleLabel => _scheduleLabel;
   String get brandBannerHomeUrl => _brandBannerHomeUrl;
   String get splashUrl => _splashUrl;
   bool get splashEnabled => _splashEnabled;
   int get splashDurationSec => _splashDurationSec;
   String? get flashInformativoMessage => _flashInformativoMessage;
+  bool get isSplashShowing => _isSplashShowing;
+
+  void setSplashShowing(bool value) {
+    if (_isSplashShowing != value) {
+      _isSplashShowing = value;
+      // When splash is dismissed, notify listeners so pending alerts can be shown
+      if (!_isSplashShowing && _flashInformativoMessage != null) {
+        notifyListeners();
+      }
+    }
+  }
 
   // Alert ID tracking — prevents re-showing the same alert
   String? _currentAlertId;
@@ -60,7 +74,35 @@ class StationProvider extends ChangeNotifier {
   StreamSubscription<List<Program>>? _programacionSub;
 
   StationProvider() {
+    _loadThemePreference();
     _initFirestoreListeners();
+  }
+
+  /// Loads the persisted theme mode from local storage.
+  Future<void> _loadThemePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('app_theme_mode');
+      if (saved == 'light') {
+        _themeMode = ThemeMode.light;
+      } else if (saved == 'dark') {
+        _themeMode = ThemeMode.dark;
+      }
+      notifyListeners();
+    } catch (_) {
+      // Si falla el storage local, se mantiene el modo por defecto.
+    }
+  }
+
+  /// Persists the theme mode to local storage (non-blocking).
+  Future<void> _persistThemePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'app_theme_mode',
+        _themeMode == ThemeMode.dark ? 'dark' : 'light',
+      );
+    } catch (_) {}
   }
 
   Future<void> resolveSessionForEmail(String email) async {
@@ -89,6 +131,7 @@ class StationProvider extends ChangeNotifier {
           _brandLogoUrl = data['logo_url'] ?? _brandLogoUrl;
           _radioLabel = data['radio_label'] ?? _radioLabel;
           _tvLabel = data['tv_label'] ?? _tvLabel;
+          _scheduleLabel = data['schedule_label'] ?? _scheduleLabel;
           _brandBannerHomeUrl = data['banner_home_url'] ?? _brandBannerHomeUrl;
           if (data['ownerEmail'] != null) _brandEmail = data['ownerEmail'];
           _splashUrl = data['splash_url'] ?? _splashUrl;
@@ -126,7 +169,10 @@ class StationProvider extends ChangeNotifier {
               _flashInformativoMessage = null;
             }
           }
-          notifyListeners();
+          
+          if (!_isSplashShowing) {
+            notifyListeners();
+          }
         }
       });
 
@@ -224,42 +270,43 @@ class StationProvider extends ChangeNotifier {
   List<Program> get currentStationPrograms =>
       _programs.where((p) => p.stationId == currentStation.id).toList();
 
-  Program? get currentLiveProgram => _programs.firstWhere(
-        (p) => p.stationId == currentStation.id && p.isLiveNow,
-        orElse: () => _programs.isNotEmpty ? _programs.first : Program(
-          id: 'def',
-          stationId: currentStation.id,
-          title: currentStation.slogan,
-          hostName: currentStation.name,
-          hostAvatarUrl: '',
-          category: 'Música',
-          startTime: '00:00',
-          endTime: '24:00',
-          isLiveNow: true,
-        ),
-      );
+  Program? get currentLiveProgram {
+    final stationProgs = currentStationPrograms;
+    if (stationProgs.isEmpty) return null;
+    return stationProgs.firstWhere(
+      (p) => p.isLiveNow,
+      orElse: () => stationProgs.first,
+    );
+  }
 
   ThemeConfig get activeThemeConfig =>
       _themeMode == ThemeMode.dark ? currentStation.darkTheme : currentStation.lightTheme;
 
   void toggleTheme() {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    _persistThemePreference();
     notifyListeners();
   }
 
-  void selectStation(int index) {
+  Future<void> selectStation(int index) async {
     if (index >= 0 && index < _stations.length) {
       _selectedStationIndex = index;
-      _updateProgramacionSubscription();
+      await _updateProgramacionSubscription();
       notifyListeners();
     }
   }
 
-  void _updateProgramacionSubscription() {
+  Future<void> _updateProgramacionSubscription() async {
     _programacionSub?.cancel();
     if (_stations.isNotEmpty && _selectedStationIndex < _stations.length) {
       final currentId = _stations[_selectedStationIndex].id;
-      _programacionSub = _firestoreService.streamProgramacion(currentId).listen((list) {
+      final stream = _firestoreService.streamProgramacion(currentId);
+      try {
+        _programs = await stream.first;
+      } catch (_) {
+        _programs = [];
+      }
+      _programacionSub = stream.listen((list) {
         _programs = list;
         notifyListeners();
       });
