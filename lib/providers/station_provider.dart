@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/app_features.dart';
 import '../models/station.dart';
 import '../models/program.dart';
 import '../models/tv_channel.dart';
@@ -59,6 +60,10 @@ class StationProvider extends ChangeNotifier {
 
   // Alert ID tracking — prevents re-showing the same alert
   String? _currentAlertId;
+
+  // Módulos activos de la marca (features flags)
+  AppFeatures _features = AppFeatures.presetFullSuite();
+  AppFeatures get features => _features;
 
   int _selectedStationIndex = 0;
 
@@ -140,6 +145,31 @@ class StationProvider extends ChangeNotifier {
               ? data['splash_duration_sec'] ?? _splashDurationSec
               : _splashDurationSec;
 
+          // Parse feature flags from marcas document
+          final oldFeatures = _features;
+          _features = AppFeatures.fromMap(data);
+
+          // Conditionally manage TV stream subscription based on features
+          if (_features.enableTv && _tvSub == null) {
+            _tvSub = _firestoreService.streamTvChannels(_activeAppId).listen((list) {
+              _tvChannels = list;
+              notifyListeners();
+            });
+          } else if (!_features.enableTv && _tvSub != null) {
+            _tvSub?.cancel();
+            _tvSub = null;
+            _tvChannels = [];
+          }
+
+          // Conditionally manage Programacion stream based on features
+          if (_features.enableSchedule && oldFeatures != _features) {
+            _updateProgramacionSubscription();
+          } else if (!_features.enableSchedule) {
+            _programacionSub?.cancel();
+            _programacionSub = null;
+            _programs = [];
+          }
+
           if (data['alerta_global'] != null && data['alerta_global'] is Map) {
             final alert = data['alerta_global'] as Map;
             final alertId = alert['id_alerta']?.toString();
@@ -176,22 +206,22 @@ class StationProvider extends ChangeNotifier {
         }
       });
 
-      // Stream `emisoras` for `_activeAppId`
+      // Stream `emisoras` for `_activeAppId` (always needed for the player)
       _emisorasSub = _firestoreService.streamEmisoras(_activeAppId).listen((list) {
         _stations = list;
         if (_selectedStationIndex >= _stations.length) {
           _selectedStationIndex = 0;
         }
         _isLoading = false;
-        _updateProgramacionSubscription();
+        // Only subscribe to programacion if the feature is enabled
+        if (_features.enableSchedule) {
+          _updateProgramacionSubscription();
+        }
         notifyListeners();
       });
 
-      // Stream `streamings` for `_activeAppId`
-      _tvSub = _firestoreService.streamTvChannels(_activeAppId).listen((list) {
-        _tvChannels = list;
-        notifyListeners();
-      });
+      // NOTE: TV streams are now conditionally started from the marcas listener
+      // when features.enableTv is true, saving Firestore reads for Solo Player tenants.
     } catch (_) {}
   }
 

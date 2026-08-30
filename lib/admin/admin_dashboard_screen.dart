@@ -4,6 +4,8 @@ import '../dashboard_web/screens/dashboard_screen.dart';
 import '../dashboard_web/screens/login_screen.dart';
 import '../dashboard_web/services/client_data_store.dart';
 import '../dashboard_web/services/emisora_repository.dart';
+import '../dashboard_web/superadmin/screens/superadmin_dashboard_screen.dart';
+import '../dashboard_web/superadmin/services/superadmin_repository.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -50,6 +52,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           return const LoginScreen();
         }
 
+        // Detección de rol SuperAdmin
+        if (SuperAdminRepository.isSuperAdmin(user.email)) {
+          return const SuperAdminDashboardScreen();
+        }
+
+        // Panel de cliente regular
         return DashboardScreen(
           repository: _emisoraRepository,
           dataStore: _clientDataStore,
@@ -58,3 +66,4 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 }
+

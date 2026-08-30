@@ -237,13 +237,6 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
   int _currentIndex = 0;
   bool _splashShown = false;
 
-  final List<Widget> _screens = const [
-    PlayerScreen(),
-    ScheduleScreen(),
-    VideoStreamScreen(),
-    SettingsScreen(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -293,6 +286,68 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
     }
   }
 
+  /// Builds the list of active screens and their corresponding nav bar items
+  /// based on the current feature flags from StationProvider.
+  ({List<Widget> screens, List<BottomNavigationBarItem> items}) _buildActiveScreens(
+    StationProvider stationProvider,
+  ) {
+    final screens = <Widget>[];
+    final items = <BottomNavigationBarItem>[];
+    final features = stationProvider.features;
+
+    // Radio (Player) - always present if enableRadio
+    if (features.enableRadio) {
+      screens.add(const PlayerScreen());
+      items.add(BottomNavigationBarItem(
+        icon: const Icon(Icons.radio_outlined),
+        activeIcon: const Icon(Icons.radio),
+        label: stationProvider.radioLabel.split(' ').first,
+      ));
+    }
+
+    // Schedule (Programación)
+    if (features.enableSchedule) {
+      screens.add(const ScheduleScreen());
+      items.add(BottomNavigationBarItem(
+        icon: const Icon(Icons.calendar_month_outlined),
+        activeIcon: const Icon(Icons.calendar_month),
+        label: stationProvider.scheduleLabel,
+      ));
+    }
+
+    // TV / Video Streaming
+    if (features.enableTv) {
+      screens.add(const VideoStreamScreen());
+      items.add(BottomNavigationBarItem(
+        icon: const Icon(Icons.ondemand_video_outlined),
+        activeIcon: const Icon(Icons.ondemand_video),
+        label: stationProvider.tvLabel.split(' ').first,
+      ));
+    }
+
+    // Settings
+    if (features.enableSettings) {
+      screens.add(const SettingsScreen());
+      items.add(const BottomNavigationBarItem(
+        icon: Icon(Icons.settings_outlined),
+        activeIcon: Icon(Icons.settings),
+        label: 'Ajustes',
+      ));
+    }
+
+    // Fallback: if somehow nothing is enabled, show at least the player
+    if (screens.isEmpty) {
+      screens.add(const PlayerScreen());
+      items.add(BottomNavigationBarItem(
+        icon: const Icon(Icons.radio_outlined),
+        activeIcon: const Icon(Icons.radio),
+        label: stationProvider.radioLabel.split(' ').first,
+      ));
+    }
+
+    return (screens: screens, items: items);
+  }
+
   @override
   Widget build(BuildContext context) {
     final stationProvider = context.watch<StationProvider>();
@@ -309,8 +364,31 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
       );
     }
 
+    final active = _buildActiveScreens(stationProvider);
+    final screens = active.screens;
+    final items = active.items;
+
+    // Clamp index to valid range when features change dynamically
+    if (_currentIndex >= screens.length) {
+      _currentIndex = 0;
+    }
+
+    // SOLO PLAYER MODE: Only 1 screen active → Full screen, no bottom nav bar
+    if (screens.length == 1) {
+      return Scaffold(
+        body: screens.first,
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            PersistentBottomBanner(),
+          ],
+        ),
+      );
+    }
+
+    // MULTI-SCREEN MODE: Dynamic bottom navigation bar
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: screens[_currentIndex],
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -328,31 +406,11 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
             unselectedItemColor: Colors.grey,
             selectedFontSize: 12,
             unselectedFontSize: 12,
-            items: [
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.radio_outlined),
-                activeIcon: const Icon(Icons.radio),
-                label: stationProvider.radioLabel.split(' ').first,
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.calendar_month_outlined),
-                activeIcon: const Icon(Icons.calendar_month),
-                label: stationProvider.scheduleLabel,
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.ondemand_video_outlined),
-                activeIcon: const Icon(Icons.ondemand_video),
-                label: stationProvider.tvLabel.split(' ').first,
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
-                label: 'Ajustes',
-              ),
-            ],
+            items: items,
           ),
         ],
       ),
     );
   }
 }
+
