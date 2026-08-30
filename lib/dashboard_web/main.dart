@@ -38,6 +38,8 @@ import 'package:radio_whitelabel/dashboard_web/services/client_data_store.dart';
 import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart';
 import 'package:radio_whitelabel/dashboard_web/theme/app_theme.dart';
 import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
+import 'package:radio_whitelabel/dashboard_web/superadmin/screens/superadmin_dashboard_screen.dart';
+import 'package:radio_whitelabel/dashboard_web/superadmin/services/superadmin_repository.dart';
 
 /// Repositorio y caché global para toda la sesión.
 final EmisoraRepository emisoraRepository = EmisoraRepository();
@@ -96,6 +98,10 @@ class _AuthGate extends StatelessWidget {
         final user = snapshot.data;
         if (user == null) {
           return const LoginScreen();
+        }
+
+        if (SuperAdminRepository.isSuperAdmin(user.email)) {
+          return const SuperAdminDashboardScreen();
         }
 
         return DashboardScreen(
