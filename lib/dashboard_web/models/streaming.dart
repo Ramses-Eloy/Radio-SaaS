@@ -13,6 +13,7 @@ class Streaming {
     this.colorSecundarioHex = '#35ACE5',
     required this.playCount,
     this.statsUpdatedAt,
+    this.mostrarEnCarrusel = false,
   });
 
   final String id;
@@ -23,6 +24,7 @@ class Streaming {
   final String colorSecundarioHex;
   final int playCount;
   final DateTime? statsUpdatedAt;
+  final bool mostrarEnCarrusel;
 
   factory Streaming.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -39,6 +41,7 @@ class Streaming {
       colorSecundarioHex: d[EmisoraFields.colorSecundarioHex] as String? ?? FirestoreTypedValue.toFirestoreString(d[EmisoraFields.colorHex]),
       playCount: (stats[EmisoraFields.statsPlayCount] as num?)?.toInt() ?? 0,
       statsUpdatedAt: ts?.toDate(),
+      mostrarEnCarrusel: d[EmisoraFields.mostrarEnCarrusel] as bool? ?? false,
     );
   }
 
@@ -51,6 +54,7 @@ class Streaming {
         'colorSecundarioHex': colorSecundarioHex,
         'playCount': playCount,
         'statsUpdatedAt': statsUpdatedAt?.toIso8601String(),
+        'mostrarEnCarrusel': mostrarEnCarrusel,
       };
 
   factory Streaming.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,7 @@ class Streaming {
     String? colorSecundarioHex,
     int? playCount,
     DateTime? statsUpdatedAt,
+    bool? mostrarEnCarrusel,
   }) {
     return Streaming(
       id: id ?? this.id,
@@ -85,6 +90,7 @@ class Streaming {
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
       playCount: playCount ?? this.playCount,
       statsUpdatedAt: statsUpdatedAt ?? this.statsUpdatedAt,
+      mostrarEnCarrusel: mostrarEnCarrusel ?? this.mostrarEnCarrusel,
     );
   }
 }

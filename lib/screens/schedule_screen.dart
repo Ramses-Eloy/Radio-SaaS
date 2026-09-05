@@ -13,6 +13,7 @@ class ScheduleScreen extends StatelessWidget {
     final stationProvider = context.watch<StationProvider>();
     final activeTheme = stationProvider.activeThemeConfig;
     final programs = stationProvider.currentStationPrograms;
+    final liveIndex = programs.indexWhere((p) => p.isLiveNow);
     final dayName = _capitalize(DateFormat('EEEE', 'es').format(DateTime.now()));
 
     return Scaffold(
@@ -40,6 +41,24 @@ class ScheduleScreen extends StatelessWidget {
               itemCount: programs.length,
               itemBuilder: (context, index) {
                 final program = programs[index];
+                
+                final isLive = program.isLiveNow;
+                final isPrevious = liveIndex != -1 && index == liveIndex - 1;
+                final isNext = liveIndex != -1 && index == liveIndex + 1;
+                
+                Color borderColor = Colors.white.withValues(alpha: 0.05);
+                double borderWidth = 1;
+                
+                if (isLive) {
+                  borderColor = activeTheme.primaryColor;
+                  borderWidth = 2;
+                } else if (isPrevious) {
+                  borderColor = Colors.grey.withValues(alpha: 0.5);
+                  borderWidth = 2;
+                } else if (isNext) {
+                  borderColor = activeTheme.secondaryColor;
+                  borderWidth = 2;
+                }
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -48,10 +67,8 @@ class ScheduleScreen extends StatelessWidget {
                     color: activeTheme.cardColor,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: program.isLiveNow
-                          ? activeTheme.primaryColor
-                          : Colors.white.withValues(alpha: 0.05),
-                      width: program.isLiveNow ? 2 : 1,
+                      color: borderColor,
+                      width: borderWidth,
                     ),
                   ),
                   child: Column(
@@ -75,16 +92,18 @@ class ScheduleScreen extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          if (program.isLiveNow)
+                          if (isLive || isPrevious || isNext)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: isLive 
+                                    ? Colors.red 
+                                    : (isPrevious ? Colors.grey : activeTheme.secondaryColor),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Text(
-                                'EN VIVO',
-                                style: TextStyle(
+                              child: Text(
+                                isLive ? 'EN VIVO' : (isPrevious ? 'ANTERIOR' : 'SIGUIENTE'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,

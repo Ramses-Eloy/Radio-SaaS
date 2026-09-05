@@ -103,6 +103,13 @@ class _GatewayScreenState extends State<GatewayScreen> {
         }
       }
 
+      // Precache all streaming TV logos
+      for (var tvChannel in stationProvider.tvChannels) {
+        if (tvChannel.imageUrl.isNotEmpty) {
+          precacheImage(CachedNetworkImageProvider(tvChannel.imageUrl), context);
+        }
+      }
+
       // Precache the banner image if available
       final bannerUrl = stationProvider.brandBannerHomeUrl.isNotEmpty
           ? stationProvider.brandBannerHomeUrl

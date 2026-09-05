@@ -23,6 +23,7 @@ import 'screens/gateway_screen.dart';
 import 'widgets/persistent_bottom_banner.dart';
 import 'widgets/floating_pip_overlay.dart';
 import 'services/telemetry_service.dart';
+import 'widgets/station_switcher.dart';
 
 // Web dashboard
 import 'admin/admin_dashboard_screen.dart';
@@ -234,7 +235,8 @@ class MainNavigationFrame extends StatefulWidget {
   State<MainNavigationFrame> createState() => _MainNavigationFrameState();
 }
 
-class _MainNavigationFrameState extends State<MainNavigationFrame> {
+class _MainNavigationFrameState extends State<MainNavigationFrame>
+    with MainNavigatorMixin<MainNavigationFrame> {
   int _currentIndex = 0;
 
   @override
@@ -253,6 +255,15 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
     // Flush any pending telemetry data before the app closes
     TelemetryService().flushAndDispose();
     super.dispose();
+  }
+
+  /// Called by StationSwitcher to jump directly to a specific tab.
+  @override
+  void jumpToTab(int index) {
+    final stationProvider = context.read<StationProvider>();
+    final active = _buildActiveScreens(stationProvider);
+    final safeIndex = index.clamp(0, active.screens.length - 1);
+    setState(() => _currentIndex = safeIndex);
   }
 
   /// Builds the list of active screens and their corresponding nav bar items

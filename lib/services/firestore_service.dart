@@ -97,6 +97,7 @@ class FirestoreService {
           imageUrl: data['logo_url'] ?? '',
           colorHex: data['color_hex'] ?? '#35ACE5',
           showSchedule: data['mostrar_programacion'] ?? false,
+          showInCarousel: data['mostrar_en_carrusel'] ?? false,
         );
       }).toList();
     });

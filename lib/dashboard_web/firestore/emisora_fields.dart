@@ -63,4 +63,5 @@ abstract final class EmisoraFields {
 
   static const String stats = 'stats';
   static const String statsPlayCount = 'playCount';
+  static const String mostrarEnCarrusel = 'mostrar_en_carrusel';
 }

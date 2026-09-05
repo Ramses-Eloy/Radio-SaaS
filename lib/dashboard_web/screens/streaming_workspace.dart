@@ -40,6 +40,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
 
   bool _saving = false;
   bool _uploadingLogo = false;
+  bool _mostrarEnCarrusel = false;
 
   final BrandStorageService _brandStorage = BrandStorageService();
 
@@ -64,6 +65,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     _logoUrl.text = s.logoUrl;
     _hex.text = ColorHex.normalize(s.colorHex);
     _hexSecundario.text = ColorHex.normalize(s.colorSecundarioHex);
+    _mostrarEnCarrusel = s.mostrarEnCarrusel;
   }
 
   @override
@@ -195,6 +197,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
         EmisoraFields.logoUrl: FirestoreTypedValue.toFirestoreString(_logoUrl.text),
         EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
         EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
+        EmisoraFields.mostrarEnCarrusel: _mostrarEnCarrusel,
       };
       await widget.repository.updateStreamingFields(
         widget.streaming.id,
@@ -208,6 +211,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
           logoUrl: payload[EmisoraFields.logoUrl] as String,
           colorHex: payload[EmisoraFields.colorHex] as String,
           colorSecundarioHex: payload[EmisoraFields.colorSecundarioHex] as String,
+          mostrarEnCarrusel: _mostrarEnCarrusel,
         ),
       );
       if (!mounted) return;
@@ -332,6 +336,29 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
                     helperText: 'Enlace de video (HLS .m3u8, MP4, YouTube, etc.).',
                     hintText: 'https://…/playlist.m3u8',
                     prefixIcon: Icon(Icons.videocam_outlined),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // ── Acceso directo en carrusel de estaciones ──────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    secondary: Icon(Icons.tv_rounded, color: scheme.primary),
+                    title: Text(
+                      'Mostrar en barra de estaciones',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'Al activarlo, este canal aparecerá en la barra superior de la app junto a las emisoras de radio. Al tocarlo, abrirá la pantalla de TV.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                    value: _mostrarEnCarrusel,
+                    onChanged: (val) => setState(() => _mostrarEnCarrusel = val),
                   ),
                 ),
                 const SizedBox(height: 24),

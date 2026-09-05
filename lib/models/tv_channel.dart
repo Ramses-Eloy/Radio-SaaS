@@ -6,6 +6,7 @@ class TvChannel {
   final String colorHex;
   final String colorSecundarioHex;
   final bool showSchedule;
+  final bool showInCarousel;
 
   TvChannel({
     required this.id,
@@ -15,6 +16,7 @@ class TvChannel {
     this.colorHex = '#35ACE5',
     this.colorSecundarioHex = '#35ACE5',
     this.showSchedule = false,
+    this.showInCarousel = false,
   });
 
   factory TvChannel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class TvChannel {
       colorHex: json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
       colorSecundarioHex: json['colorSecundarioHex'] ?? json['color_secundario_hex'] ?? json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
       showSchedule: json['showSchedule'] ?? false,
+      showInCarousel: json['showInCarousel'] ?? json['mostrar_en_carrusel'] ?? false,
     );
   }
 
@@ -37,6 +40,7 @@ class TvChannel {
         'colorHex': colorHex,
         'colorSecundarioHex': colorSecundarioHex,
         'showSchedule': showSchedule,
+        'mostrar_en_carrusel': showInCarousel,
       };
 
   TvChannel copyWith({
@@ -47,6 +51,7 @@ class TvChannel {
     String? colorHex,
     String? colorSecundarioHex,
     bool? showSchedule,
+    bool? showInCarousel,
   }) {
     return TvChannel(
       id: id ?? this.id,
@@ -56,6 +61,7 @@ class TvChannel {
       colorHex: colorHex ?? this.colorHex,
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
       showSchedule: showSchedule ?? this.showSchedule,
+      showInCarousel: showInCarousel ?? this.showInCarousel,
     );
   }
 }
