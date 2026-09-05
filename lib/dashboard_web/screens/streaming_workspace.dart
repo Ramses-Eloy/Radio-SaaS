@@ -195,7 +195,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
   Future<void> _uploadLogoCarrusel(Uint8List bytes, String contentType) async {
     setState(() => _uploadingLogoCarrusel = true);
     try {
-      final downloadUrl = await _brandStorage.uploadStreamingLogo(
+      final downloadUrl = await _brandStorage.uploadStreamingLogoCarrusel(
         appId: widget.appId,
         streamingId: widget.streaming.id,
         bytes: bytes,

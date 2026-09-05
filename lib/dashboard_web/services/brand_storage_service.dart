@@ -29,6 +29,10 @@ class BrandStorageService {
   static String streamingLogoPath(String appId, String streamingId) =>
       'streamings/$appId/$streamingId/logo.png';
 
+  /// Ruta estricta: `streamings/{appId}/{streamingId}/logo_carrusel.png`.
+  static String streamingLogoCarruselPath(String appId, String streamingId) =>
+      'streamings/$appId/$streamingId/logo_carrusel.png';
+
   Future<String> uploadBrandLogo({
     required String appId,
     required Uint8List bytes,
@@ -86,6 +90,19 @@ class BrandStorageService {
   }) {
     return _uploadImage(
       storagePath: streamingLogoPath(appId, streamingId),
+      bytes: bytes,
+      contentType: contentType,
+    );
+  }
+
+  Future<String> uploadStreamingLogoCarrusel({
+    required String appId,
+    required String streamingId,
+    required Uint8List bytes,
+    required String contentType,
+  }) {
+    return _uploadImage(
+      storagePath: streamingLogoCarruselPath(appId, streamingId),
       bytes: bytes,
       contentType: contentType,
     );
