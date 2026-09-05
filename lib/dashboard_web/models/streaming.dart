@@ -14,6 +14,7 @@ class Streaming {
     required this.playCount,
     this.statsUpdatedAt,
     this.mostrarEnCarrusel = false,
+    this.logoCarrusel = '',
   });
 
   final String id;
@@ -25,6 +26,7 @@ class Streaming {
   final int playCount;
   final DateTime? statsUpdatedAt;
   final bool mostrarEnCarrusel;
+  final String logoCarrusel;
 
   factory Streaming.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -42,6 +44,7 @@ class Streaming {
       playCount: (stats[EmisoraFields.statsPlayCount] as num?)?.toInt() ?? 0,
       statsUpdatedAt: ts?.toDate(),
       mostrarEnCarrusel: d[EmisoraFields.mostrarEnCarrusel] as bool? ?? false,
+      logoCarrusel: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.logoCarrusel]),
     );
   }
 
@@ -55,6 +58,7 @@ class Streaming {
         'playCount': playCount,
         'statsUpdatedAt': statsUpdatedAt?.toIso8601String(),
         'mostrarEnCarrusel': mostrarEnCarrusel,
+        'logoCarrusel': logoCarrusel,
       };
 
   factory Streaming.fromJson(Map<String, dynamic> json) {
@@ -67,6 +71,8 @@ class Streaming {
       colorSecundarioHex: json['colorSecundarioHex'] as String? ?? json['colorHex'] as String? ?? '#35ACE5',
       playCount: (json['playCount'] as num?)?.toInt() ?? 0,
       statsUpdatedAt: json['statsUpdatedAt'] != null ? DateTime.tryParse(json['statsUpdatedAt'] as String) : null,
+      mostrarEnCarrusel: json['mostrarEnCarrusel'] as bool? ?? false,
+      logoCarrusel: json['logoCarrusel'] as String? ?? '',
     );
   }
 
@@ -80,6 +86,7 @@ class Streaming {
     int? playCount,
     DateTime? statsUpdatedAt,
     bool? mostrarEnCarrusel,
+    String? logoCarrusel,
   }) {
     return Streaming(
       id: id ?? this.id,
@@ -91,6 +98,7 @@ class Streaming {
       playCount: playCount ?? this.playCount,
       statsUpdatedAt: statsUpdatedAt ?? this.statsUpdatedAt,
       mostrarEnCarrusel: mostrarEnCarrusel ?? this.mostrarEnCarrusel,
+      logoCarrusel: logoCarrusel ?? this.logoCarrusel,
     );
   }
 }

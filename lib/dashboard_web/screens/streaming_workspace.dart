@@ -35,11 +35,13 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
   final _nombre = TextEditingController();
   final _urlVideo = TextEditingController();
   final _logoUrl = TextEditingController();
+  final _logoCarrusel = TextEditingController();
   final _hex = TextEditingController();
   final _hexSecundario = TextEditingController();
 
   bool _saving = false;
   bool _uploadingLogo = false;
+  bool _uploadingLogoCarrusel = false;
   bool _mostrarEnCarrusel = false;
 
   final BrandStorageService _brandStorage = BrandStorageService();
@@ -63,6 +65,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     _nombre.text = s.nombre;
     _urlVideo.text = s.urlVideo;
     _logoUrl.text = s.logoUrl;
+    _logoCarrusel.text = s.logoCarrusel;
     _hex.text = ColorHex.normalize(s.colorHex);
     _hexSecundario.text = ColorHex.normalize(s.colorSecundarioHex);
     _mostrarEnCarrusel = s.mostrarEnCarrusel;
@@ -73,6 +76,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     _nombre.dispose();
     _urlVideo.dispose();
     _logoUrl.dispose();
+    _logoCarrusel.dispose();
     _hex.dispose();
     _hexSecundario.dispose();
     super.dispose();
@@ -188,6 +192,36 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     }
   }
 
+  Future<void> _uploadLogoCarrusel(Uint8List bytes, String contentType) async {
+    setState(() => _uploadingLogoCarrusel = true);
+    try {
+      final downloadUrl = await _brandStorage.uploadStreamingLogo(
+        appId: widget.appId,
+        streamingId: widget.streaming.id,
+        bytes: bytes,
+        contentType: contentType,
+      );
+      await widget.repository.updateStreamingFields(
+        widget.streaming.id,
+        {EmisoraFields.logoCarrusel: downloadUrl},
+        appId: widget.appId,
+      );
+      if (!mounted) return;
+      _logoCarrusel.text = downloadUrl;
+      widget.dataStore.patchStreaming(widget.streaming.copyWith(logoCarrusel: downloadUrl));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Logo del carrusel guardado correctamente.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo subir la imagen: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingLogoCarrusel = false);
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
@@ -195,6 +229,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
         EmisoraFields.nombre: _nombre.text.trim(),
         EmisoraFields.urlVideo: FirestoreTypedValue.toFirestoreString(_urlVideo.text),
         EmisoraFields.logoUrl: FirestoreTypedValue.toFirestoreString(_logoUrl.text),
+        EmisoraFields.logoCarrusel: FirestoreTypedValue.toFirestoreString(_logoCarrusel.text),
         EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
         EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
         EmisoraFields.mostrarEnCarrusel: _mostrarEnCarrusel,
@@ -209,6 +244,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
           nombre: payload[EmisoraFields.nombre] as String,
           urlVideo: payload[EmisoraFields.urlVideo] as String,
           logoUrl: payload[EmisoraFields.logoUrl] as String,
+          logoCarrusel: payload[EmisoraFields.logoCarrusel] as String,
           colorHex: payload[EmisoraFields.colorHex] as String,
           colorSecundarioHex: payload[EmisoraFields.colorSecundarioHex] as String,
           mostrarEnCarrusel: _mostrarEnCarrusel,
@@ -361,6 +397,29 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
                     onChanged: (val) => setState(() => _mostrarEnCarrusel = val),
                   ),
                 ),
+                if (_mostrarEnCarrusel) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Logo cuadrado para carrusel',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Sube un logo 1:1 (ej. 500x500) para que se vea correctamente en la barra de estaciones. Si lo dejas vacío, se usará la imagen general.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 16),
+                  BrandImageUploadZone(
+                    uploading: _uploadingLogoCarrusel,
+                    currentImageUrl: _logoCarrusel.text,
+                    onUpload: _uploadLogoCarrusel,
+                    uploadButtonLabel: 'Subir Logo Cuadrado',
+                    uploadingLabel: 'Subiendo...',
+                    emptyPreviewText: 'Sin logo cuadrado (usando fallback).',
+                    previewWidth: 64,
+                    previewHeight: 64,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   'Imagen del canal',

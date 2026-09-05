@@ -119,7 +119,7 @@ class StationSwitcher extends StatelessWidget {
               }
             },
             child: _StationCard(
-              imageUrl: tv.imageUrl,
+              imageUrl: tv.logoCarouselUrl.isNotEmpty ? tv.logoCarouselUrl : tv.imageUrl,
               name: tv.name,
               isSelected: false,
               isLive: true,

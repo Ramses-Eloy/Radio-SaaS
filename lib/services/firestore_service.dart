@@ -95,6 +95,7 @@ class FirestoreService {
           name: data['nombre'] ?? 'Canal de TV',
           streamUrl: data['url_video'] ?? '',
           imageUrl: data['logo_url'] ?? '',
+          logoCarouselUrl: data['logo_carrusel'] ?? '',
           colorHex: data['color_hex'] ?? '#35ACE5',
           showSchedule: data['mostrar_programacion'] ?? false,
           showInCarousel: data['mostrar_en_carrusel'] ?? false,

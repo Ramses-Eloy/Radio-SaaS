@@ -3,6 +3,7 @@ class TvChannel {
   final String name;
   final String streamUrl;
   final String imageUrl;
+  final String logoCarouselUrl;
   final String colorHex;
   final String colorSecundarioHex;
   final bool showSchedule;
@@ -13,6 +14,7 @@ class TvChannel {
     required this.name,
     required this.streamUrl,
     required this.imageUrl,
+    this.logoCarouselUrl = '',
     this.colorHex = '#35ACE5',
     this.colorSecundarioHex = '#35ACE5',
     this.showSchedule = false,
@@ -25,6 +27,7 @@ class TvChannel {
       name: json['name'] ?? 'Canal de TV en vivo',
       streamUrl: json['streamUrl'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
+      logoCarouselUrl: json['logoCarouselUrl'] ?? json['logo_carrusel'] ?? '',
       colorHex: json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
       colorSecundarioHex: json['colorSecundarioHex'] ?? json['color_secundario_hex'] ?? json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
       showSchedule: json['showSchedule'] ?? false,
@@ -37,6 +40,7 @@ class TvChannel {
         'name': name,
         'streamUrl': streamUrl,
         'imageUrl': imageUrl,
+        'logo_carrusel': logoCarouselUrl,
         'colorHex': colorHex,
         'colorSecundarioHex': colorSecundarioHex,
         'showSchedule': showSchedule,
@@ -48,6 +52,7 @@ class TvChannel {
     String? name,
     String? streamUrl,
     String? imageUrl,
+    String? logoCarouselUrl,
     String? colorHex,
     String? colorSecundarioHex,
     bool? showSchedule,
@@ -58,6 +63,7 @@ class TvChannel {
       name: name ?? this.name,
       streamUrl: streamUrl ?? this.streamUrl,
       imageUrl: imageUrl ?? this.imageUrl,
+      logoCarouselUrl: logoCarouselUrl ?? this.logoCarouselUrl,
       colorHex: colorHex ?? this.colorHex,
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
       showSchedule: showSchedule ?? this.showSchedule,
