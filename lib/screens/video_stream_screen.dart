@@ -35,28 +35,7 @@ class VideoStreamScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Description
-            Row(
-              children: [
-                Icon(Icons.ondemand_video_rounded, color: activeTheme.secondaryColor, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  'Canales de Video HD',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.titleLarge?.color,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Selecciona un canal para abrir el reproductor independiente o activar el modo PiP flotante.',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-            ),
 
-            const SizedBox(height: 20),
 
             if (tvChannels.isEmpty)
               Container(
@@ -217,10 +196,10 @@ class VideoStreamScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       tv.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: Theme.of(context).textTheme.titleLarge?.color,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -238,7 +217,7 @@ class VideoStreamScreen extends StatelessWidget {
 
                               // Enter detail screen button
                               IconButton(
-                                icon: const Icon(Icons.open_in_full_rounded, color: Colors.white),
+                                icon: const Icon(Icons.open_in_full_rounded),
                                 tooltip: 'Abrir pantalla de video',
                                 onPressed: () {
                                   Navigator.push(

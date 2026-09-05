@@ -13,6 +13,11 @@ class StationSwitcher extends StatelessWidget {
     final stationProvider = context.watch<StationProvider>();
     final stations = stationProvider.stations;
     final activeTheme = stationProvider.activeThemeConfig;
+    final features = stationProvider.features;
+
+    if (!features.enableMultiStation || stations.length <= 1) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       height: 90,

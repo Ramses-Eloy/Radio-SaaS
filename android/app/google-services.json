@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:310808715575:android:f59d106dc7faa4906f3ab2",
+        "mobilesdk_app_id": "1:310808715575:android:2abf997b7b5a93686f3ab2",
         "android_client_info": {
-          "package_name": "com.example.radioapp2"
+          "package_name": "com.gruposira.radio"
         }
       },
       "oauth_client": [],

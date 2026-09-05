@@ -13,6 +13,7 @@ import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart'
 import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:radio_whitelabel/dashboard_web/widgets/brand_identity_header.dart';
+import 'package:radio_whitelabel/models/app_features.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
@@ -162,6 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           selectedStreamingId: _selectedStreamingId,
           onSelectStreaming: _selectStreaming,
           onSignOut: _signOut,
+          features: data.features ?? const AppFeatures(),
         );
 
         final content = Container(
@@ -182,6 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             dataStore: widget.dataStore,
             scheme: scheme,
             unknownIds: unknown,
+            features: data.features ?? const AppFeatures(),
           ),
         );
 
@@ -283,6 +286,7 @@ class _Body extends StatelessWidget {
     required this.dataStore,
     required this.scheme,
     required this.unknownIds,
+    required this.features,
   });
 
   final int sectionIndex;
@@ -300,6 +304,7 @@ class _Body extends StatelessWidget {
   final ClientDataStore dataStore;
   final ColorScheme scheme;
   final List<String> unknownIds;
+  final AppFeatures features;
 
   Emisora? _selectedRadio() {
     if (radios.isEmpty) return null;
@@ -339,8 +344,16 @@ class _Body extends StatelessWidget {
               dataStore: dataStore,
             );
     } else if (sectionIndex == 1) {
-      final selected = _selectedRadio();
-      content = radios.isEmpty
+      if (!features.enableRadio) {
+        content = _EmptySectionState(
+          icon: Icons.block,
+          title: 'Módulo Desactivado',
+          message: 'El módulo de Radio no está activo en su plan.',
+          scheme: scheme,
+        );
+      } else {
+        final selected = _selectedRadio();
+        content = radios.isEmpty
           ? _EmptySectionState(
               icon: Icons.radio_outlined,
               title: 'Sin radios de audio',
@@ -358,11 +371,20 @@ class _Body extends StatelessWidget {
                   ownerEmail: ownerEmail,
                   dataStore: dataStore,
                 );
+      }
     } else if (sectionIndex == 2) {
-      final selected = _selectedStreaming();
-      content = streamings.isEmpty
+      if (!features.enableTv) {
+        content = _EmptySectionState(
+          icon: Icons.block,
+          title: 'Módulo Desactivado',
+          message: 'El módulo de TV no está activo en su plan.',
+          scheme: scheme,
+        );
+      } else {
+        final selected = _selectedStreaming();
+        content = streamings.isEmpty
           ? _EmptySectionState(
-              icon: Icons.live_tv_outlined,
+              icon: Icons.tv,
               title: 'Sin streamings TV',
               message:
                   'Aún no tiene canales de TV en directo. Contacte al administrador si necesita activar uno.',
@@ -378,14 +400,24 @@ class _Body extends StatelessWidget {
                   ownerEmail: ownerEmail,
                   dataStore: dataStore,
                 );
+      }
     } else if (sectionIndex == 3) {
-      content = ProgramacionWorkspace(
-        repository: repository,
-        ownerEmail: writeOwnerEmail,
+      if (!features.enableSchedule) {
+        content = _EmptySectionState(
+          icon: Icons.block,
+          title: 'Módulo Desactivado',
+          message: 'El módulo de Programación no está activo en su plan.',
+          scheme: scheme,
+        );
+      } else {
+        content = ProgramacionWorkspace(
+          repository: repository,
+          ownerEmail: writeOwnerEmail,
         appId: prefix!,
         radios: radios,
         streamings: streamings,
       );
+      }
     } else {
       content = EstadisticasWorkspace(
         ownerEmail: ownerEmail,
@@ -425,6 +457,7 @@ class _Sidebar extends StatelessWidget {
     required this.selectedStreamingId,
     required this.onSelectStreaming,
     required this.onSignOut,
+    required this.features,
   });
 
   final String userEmail;
@@ -439,6 +472,7 @@ class _Sidebar extends StatelessWidget {
   final String? selectedStreamingId;
   final ValueChanged<String?> onSelectStreaming;
   final VoidCallback onSignOut;
+  final AppFeatures features;
 
   @override
   Widget build(BuildContext context) {
@@ -515,7 +549,11 @@ class _Sidebar extends StatelessWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              child: _NavList(sectionIndex: sectionIndex, onSectionChanged: onSectionChanged),
+              child: _NavList(
+                sectionIndex: sectionIndex, 
+                onSectionChanged: onSectionChanged,
+                features: features,
+              ),
             ),
             if (sectionIndex == 1) ...[
               const Divider(height: 1),
@@ -625,10 +663,12 @@ class _NavList extends StatelessWidget {
   const _NavList({
     required this.sectionIndex,
     required this.onSectionChanged,
+    required this.features,
   });
 
   final int sectionIndex;
   final ValueChanged<int> onSectionChanged;
+  final AppFeatures features;
 
   @override
   Widget build(BuildContext context) {
@@ -642,27 +682,33 @@ class _NavList extends StatelessWidget {
           onTap: () => onSectionChanged(0),
         ),
         const SizedBox(height: 4),
-        _NavItem(
-          selected: sectionIndex == 1,
-          icon: Icons.radio_outlined,
-          label: 'Radios',
-          onTap: () => onSectionChanged(1),
-        ),
-        const SizedBox(height: 4),
-        _NavItem(
-          selected: sectionIndex == 2,
-          icon: Icons.live_tv_outlined,
-          label: 'Streamings TV',
-          onTap: () => onSectionChanged(2),
-        ),
-        const SizedBox(height: 4),
-        _NavItem(
-          selected: sectionIndex == 3,
-          icon: Icons.calendar_month_outlined,
-          label: 'Gestión de Programación',
-          onTap: () => onSectionChanged(3),
-        ),
-        const SizedBox(height: 4),
+        if (features.enableRadio) ...[
+          _NavItem(
+            selected: sectionIndex == 1,
+            icon: Icons.radio_outlined,
+            label: 'Radios',
+            onTap: () => onSectionChanged(1),
+          ),
+          const SizedBox(height: 4),
+        ],
+        if (features.enableTv) ...[
+          _NavItem(
+            selected: sectionIndex == 2,
+            icon: Icons.tv,
+            label: 'Streamings TV',
+            onTap: () => onSectionChanged(2),
+          ),
+          const SizedBox(height: 4),
+        ],
+        if (features.enableSchedule) ...[
+          _NavItem(
+            selected: sectionIndex == 3,
+            icon: Icons.calendar_month_outlined,
+            label: 'Gestión de Programación',
+            onTap: () => onSectionChanged(3),
+          ),
+          const SizedBox(height: 4),
+        ],
         _NavItem(
           selected: sectionIndex == 4,
           icon: Icons.bar_chart_outlined,

@@ -114,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                   ListTile(
                     leading: Icon(Icons.timer, color: activeTheme.primaryColor),
-                    title: const Text('Temporizador de Apagado (Sleep Timer)', style: TextStyle(fontWeight: FontWeight.bold)),
+                    title: const Text('Temporizador de Apagado', style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(
                       _selectedTimerMinutes == 0
                           ? 'Desactivado'

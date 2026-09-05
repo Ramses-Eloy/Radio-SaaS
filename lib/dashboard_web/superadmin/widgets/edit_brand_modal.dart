@@ -22,10 +22,12 @@ class _EditBrandModalState extends State<EditBrandModal> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nombreController;
   late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
   late bool _active;
   bool _saving = false;
   bool _sendingReset = false;
   bool _confirmingDelete = false;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -33,6 +35,7 @@ class _EditBrandModalState extends State<EditBrandModal> {
     super.initState();
     _nombreController = TextEditingController(text: widget.marca.nombreGrupo);
     _emailController = TextEditingController(text: widget.marca.ownerEmail);
+    _passwordController = TextEditingController();
     _active = widget.marca.active;
   }
 
@@ -40,6 +43,7 @@ class _EditBrandModalState extends State<EditBrandModal> {
   void dispose() {
     _nombreController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -50,8 +54,10 @@ class _EditBrandModalState extends State<EditBrandModal> {
     try {
       await widget.repository.updateMarcaDetails(
         appId: widget.marca.appId,
+        currentEmail: widget.marca.ownerEmail,
         nombreGrupo: _nombreController.text.trim(),
-        ownerEmail: _emailController.text.trim().toLowerCase(),
+        newOwnerEmail: _emailController.text.trim() != widget.marca.ownerEmail ? _emailController.text.trim() : null,
+        newPassword: _passwordController.text.trim().isNotEmpty ? _passwordController.text.trim() : null,
         active: _active,
       );
       if (mounted) {
@@ -204,7 +210,7 @@ class _EditBrandModalState extends State<EditBrandModal> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  // ─── RESET PASSWORD ───
+                  // ─── RESET PASSWORD ENLACE ───
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
@@ -216,8 +222,34 @@ class _EditBrandModalState extends State<EditBrandModal> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.lock_reset, size: 18),
-                      label: const Text('Enviar enlace de restablecimiento de contraseña'),
+                      label: const Text('O enviar enlace de restablecimiento al correo'),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  // ─── NUEVA CONTRASEÑA DIRECTA ───
+                  Text('Nueva Contraseña (Opcional)', style: textTheme.labelMedium),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: 'Déjalo en blanco para no cambiar',
+                      hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                    obscureText: _obscurePassword,
+                    validator: (v) {
+                      if (v != null && v.isNotEmpty && v.length < 6) {
+                        return 'La contraseña debe tener al menos 6 caracteres';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   // ─── ESTADO ───

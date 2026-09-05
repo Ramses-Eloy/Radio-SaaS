@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../theme/theme_controller.dart';
+import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
+
+
 import '../../utils/color_hex.dart';
 import '../services/superadmin_repository.dart';
-import '../widgets/configure_modules_drawer.dart';
 import '../widgets/new_brand_modal.dart';
-import '../widgets/edit_brand_modal.dart';
+import '../widgets/manage_brand_dialog.dart';
 
 /// Pantalla principal del SuperAdmin: muestra la tabla de todas las marcas
 /// registradas en el SaaS con acciones para configurar módulos, crear y editar.
@@ -23,7 +24,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
   List<MarcaRecord> _marcas = [];
   bool _loading = true;
   String _searchQuery = '';
-  String _planFilter = 'Todos'; // Todos | Solo Player | Full Suite
+  String _moduleFilter = 'Todos'; // Todos | Radio | TV | Programación
 
   @override
   void initState() {
@@ -54,21 +55,21 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             m.ownerEmail.toLowerCase().contains(q);
       }).toList();
     }
-    if (_planFilter == 'Solo Player') {
-      list = list.where((m) => m.planLabel == 'Solo Player').toList();
-    } else if (_planFilter == 'Full Suite') {
-      list = list.where((m) => m.planLabel == 'Full Suite').toList();
+    if (_moduleFilter == 'Radio') {
+      list = list.where((m) => m.features.enableRadio).toList();
+    } else if (_moduleFilter == 'TV') {
+      list = list.where((m) => m.features.enableTv).toList();
+    } else if (_moduleFilter == 'Programación') {
+      list = list.where((m) => m.features.enableSchedule).toList();
     }
     return list;
   }
 
-  void _openModulesDrawer(MarcaRecord marca) {
+  void _openManageBrand(MarcaRecord marca) {
     showDialog(
       context: context,
-      builder: (ctx) => ConfigureModulesDrawer(
-        marca: marca,
-        repository: _repo,
-      ),
+      barrierDismissible: false,
+      builder: (ctx) => ManageBrandDialog(marca: marca, repository: _repo),
     );
   }
 
@@ -80,13 +81,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
     );
   }
 
-  void _openEditBrandModal(MarcaRecord marca) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => EditBrandModal(marca: marca, repository: _repo),
-    );
-  }
+
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
@@ -98,6 +93,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      backgroundColor: scheme.surface,
       body: Row(
         children: [
           // ─── SIDEBAR ───
@@ -116,8 +112,9 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                   scheme: scheme,
                   textTheme: textTheme,
                   totalMarcas: _marcas.length,
-                  soloPlayerCount: _marcas.where((m) => m.planLabel == 'Solo Player').length,
-                  fullSuiteCount: _marcas.where((m) => m.planLabel == 'Full Suite').length,
+                  radioCount: _marcas.where((m) => m.features.enableRadio).length,
+                  tvCount: _marcas.where((m) => m.features.enableTv).length,
+                  scheduleCount: _marcas.where((m) => m.features.enableSchedule).length,
                 ),
                 const SizedBox(height: 4),
                 // ─── SEARCH + FILTERS + NEW BRAND BUTTON ───
@@ -144,9 +141,9 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _PlanFilterChips(
-                        current: _planFilter,
-                        onChanged: (v) => setState(() => _planFilter = v),
+                      _ModuleFilterChips(
+                        current: _moduleFilter,
+                        onChanged: (v) => setState(() => _moduleFilter = v),
                         scheme: scheme,
                       ),
                       const SizedBox(width: 12),
@@ -170,173 +167,14 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                           marcas: _filteredMarcas,
                           scheme: scheme,
                           textTheme: textTheme,
-                          onConfigureModules: _openModulesDrawer,
-                          onEdit: _openEditBrandModal,
+                          onConfigureModules: _openManageBrand,
+                          onEdit: _openManageBrand,
                         ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════
-// SIDEBAR
-// ═══════════════════════════════════════════════
-class _SuperAdminSidebar extends StatelessWidget {
-  const _SuperAdminSidebar({
-    required this.scheme,
-    required this.textTheme,
-    required this.onSignOut,
-  });
-
-  final ColorScheme scheme;
-  final TextTheme textTheme;
-  final VoidCallback onSignOut;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: scheme.surfaceContainerLow,
-      child: SizedBox(
-        width: 260,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Logo / Title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [scheme.primary, scheme.tertiary],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.cell_tower, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Radio SaaS',
-                          style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          'Master Console',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Theme toggle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Card(
-                child: ValueListenableBuilder<ThemeMode>(
-                  valueListenable: themeModeNotifier,
-                  builder: (context, mode, _) {
-                    final isDark = mode == ThemeMode.dark;
-                    return SwitchListTile.adaptive(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      title: const Text('Modo oscuro'),
-                      subtitle: Text(
-                        isDark ? 'Activado' : 'Desactivado',
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                      value: isDark,
-                      onChanged: (v) async {
-                        final next = v ? ThemeMode.dark : ThemeMode.light;
-                        themeModeNotifier.value = next;
-                        await persistThemePreference(next);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-            const Divider(height: 24),
-            // Nav items
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Material(
-                color: scheme.primaryContainer.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-                child: ListTile(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  leading: const Icon(Icons.business),
-                  title: const Text('Marcas y Clientes'),
-                  selected: true,
-                ),
-              ),
-            ),
-            const Spacer(),
-            // SuperAdmin badge
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB45309).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFB45309).withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.shield, color: Color(0xFFF59E0B), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'SUPER ADMIN',
-                            style: textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFFF59E0B),
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.0,
-                              fontSize: 10,
-                            ),
-                          ),
-                          Text(
-                            SuperAdminRepository.superAdminEmail,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                              fontSize: 10,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 16),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Cerrar sesión'),
-              onTap: onSignOut,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
       ),
     );
   }
@@ -350,15 +188,17 @@ class _MetricBar extends StatelessWidget {
     required this.scheme,
     required this.textTheme,
     required this.totalMarcas,
-    required this.soloPlayerCount,
-    required this.fullSuiteCount,
+    required this.radioCount,
+    required this.tvCount,
+    required this.scheduleCount,
   });
 
   final ColorScheme scheme;
   final TextTheme textTheme;
   final int totalMarcas;
-  final int soloPlayerCount;
-  final int fullSuiteCount;
+  final int radioCount;
+  final int tvCount;
+  final int scheduleCount;
 
   @override
   Widget build(BuildContext context) {
@@ -368,10 +208,10 @@ class _MetricBar extends StatelessWidget {
         children: [
           Expanded(
             child: _KpiCard(
-              icon: Icons.business,
+              icon: Icons.domain,
               iconColor: scheme.primary,
               label: 'Total Marcas',
-              value: '$totalMarcas Registradas',
+              value: '$totalMarcas',
               scheme: scheme,
               textTheme: textTheme,
             ),
@@ -381,8 +221,8 @@ class _MetricBar extends StatelessWidget {
             child: _KpiCard(
               icon: Icons.radio,
               iconColor: const Color(0xFF38BDF8),
-              label: 'Solo Player',
-              value: '$soloPlayerCount emisoras',
+              label: 'Radio Activa',
+              value: '$radioCount',
               scheme: scheme,
               textTheme: textTheme,
             ),
@@ -390,10 +230,21 @@ class _MetricBar extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: _KpiCard(
-              icon: Icons.live_tv,
+              icon: Icons.tv,
               iconColor: const Color(0xFF10B981),
-              label: 'Full Suite',
-              value: '$fullSuiteCount emisoras',
+              label: 'TV Activa',
+              value: '$tvCount',
+              scheme: scheme,
+              textTheme: textTheme,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _KpiCard(
+              icon: Icons.calendar_month,
+              iconColor: const Color(0xFFF59E0B),
+              label: 'Parrillas Activas',
+              value: '$scheduleCount',
               scheme: scheme,
               textTheme: textTheme,
             ),
@@ -461,10 +312,10 @@ class _KpiCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════
-// PLAN FILTER CHIPS
+// MODULE FILTER CHIPS
 // ═══════════════════════════════════════════════
-class _PlanFilterChips extends StatelessWidget {
-  const _PlanFilterChips({
+class _ModuleFilterChips extends StatelessWidget {
+  const _ModuleFilterChips({
     required this.current,
     required this.onChanged,
     required this.scheme,
@@ -479,8 +330,9 @@ class _PlanFilterChips extends StatelessWidget {
     return SegmentedButton<String>(
       segments: const [
         ButtonSegment(value: 'Todos', label: Text('Todos')),
-        ButtonSegment(value: 'Solo Player', label: Text('Solo Player')),
-        ButtonSegment(value: 'Full Suite', label: Text('Full Suite')),
+        ButtonSegment(value: 'Radio', label: Text('Con Radio')),
+        ButtonSegment(value: 'TV', label: Text('Con TV')),
+        ButtonSegment(value: 'Programación', label: Text('Con Prog.')),
       ],
       selected: {current},
       onSelectionChanged: (s) => onChanged(s.first),
@@ -520,7 +372,7 @@ class _MarcasTable extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.business_outlined, size: 56, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
+            Icon(Icons.domain, size: 56, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
             Text(
               'No se encontraron marcas',
@@ -547,8 +399,7 @@ class _MarcasTable extends StatelessWidget {
                 children: [
                   _HeaderCell('MARCA / LOGO', flex: 3),
                   _HeaderCell('OWNER EMAIL', flex: 3),
-                  _HeaderCell('PLAN', flex: 2),
-                  _HeaderCell('MÓDULOS', flex: 3),
+                  _HeaderCell('MÓDULOS ACTIVOS', flex: 5),
                   _HeaderCell('ESTADO', flex: 1),
                   _HeaderCell('ACCIONES', flex: 2),
                 ],
@@ -675,14 +526,9 @@ class _MarcaRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          // PLAN BADGE
-          Expanded(
-            flex: 2,
-            child: _PlanBadge(plan: marca.planLabel),
-          ),
           // MÓDULOS (mini icons)
           Expanded(
-            flex: 3,
+            flex: 5,
             child: Row(
               children: [
                 _ModuleIcon(
@@ -692,7 +538,7 @@ class _MarcaRow extends StatelessWidget {
                   scheme: scheme,
                 ),
                 _ModuleIcon(
-                  icon: Icons.live_tv,
+                  icon: Icons.tv,
                   enabled: marca.features.enableTv,
                   tooltip: 'TV',
                   scheme: scheme,
@@ -710,7 +556,7 @@ class _MarcaRow extends StatelessWidget {
                   scheme: scheme,
                 ),
                 _ModuleIcon(
-                  icon: Icons.cell_tower,
+                  icon: Icons.podcasts,
                   enabled: marca.features.enableMultiStation,
                   tooltip: 'Multi-Emisora',
                   scheme: scheme,
@@ -767,35 +613,6 @@ class _MarcaRow extends StatelessWidget {
   }
 }
 
-class _PlanBadge extends StatelessWidget {
-  const _PlanBadge({required this.plan});
-  final String plan;
-
-  @override
-  Widget build(BuildContext context) {
-    final isFullSuite = plan == 'Full Suite';
-    final color = isFullSuite ? const Color(0xFF10B981) : const Color(0xFF38BDF8);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          plan,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ModuleIcon extends StatelessWidget {
   const _ModuleIcon({
     required this.icon,
@@ -824,3 +641,124 @@ class _ModuleIcon extends StatelessWidget {
     );
   }
 }
+
+// ═══════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════
+class _SuperAdminSidebar extends StatelessWidget {
+  const _SuperAdminSidebar({
+    required this.scheme,
+    required this.textTheme,
+    required this.onSignOut,
+  });
+
+  final ColorScheme scheme;
+  final TextTheme textTheme;
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: scheme.surfaceContainerLow,
+      child: SizedBox(
+        width: 260,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Logo / Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [scheme.primary, scheme.tertiary],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.podcasts, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Radio SaaS',
+                          style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          'Master Console',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 32),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  Material(
+                    color: scheme.primaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      leading: const Icon(Icons.domain),
+                      title: const Text('Marcas y Clientes'),
+                      selected: true,
+                      onTap: () {}, // Solo hay una vista ahora
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              child: Card(
+                child: ValueListenableBuilder<ThemeMode>(
+                  valueListenable: themeModeNotifier,
+                  builder: (context, mode, _) {
+                    final isDark = mode == ThemeMode.dark;
+                    return SwitchListTile.adaptive(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      title: const Text('Modo oscuro', style: TextStyle(fontSize: 14)),
+                      subtitle: Text(
+                        isDark ? 'Activado' : 'Desactivado',
+                        style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                      ),
+                      value: isDark,
+                      onChanged: (v) async {
+                        final next = v ? ThemeMode.dark : ThemeMode.light;
+                        themeModeNotifier.value = next;
+                        await persistThemePreference(next);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: OutlinedButton.icon(
+                onPressed: onSignOut,
+                icon: const Icon(Icons.logout, size: 20),
+                label: const Text('Cerrar Sesión'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

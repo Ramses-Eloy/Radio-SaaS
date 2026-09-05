@@ -169,8 +169,6 @@ abstract final class CreateContentDialogs {
           EmisoraFields.nombre: nombre,
           EmisoraFields.urlVideo: '',
           EmisoraFields.logoUrl: '',
-          EmisoraFields.showOnHome: false,
-          EmisoraFields.mostrarProgramacion: true,
         },
       );
       dataStore.addStreaming(
@@ -180,8 +178,6 @@ abstract final class CreateContentDialogs {
           urlVideo: '',
           logoUrl: '',
           colorHex: '',
-          showOnHome: false,
-          mostrarProgramacion: true,
           playCount: 0,
         ),
       );

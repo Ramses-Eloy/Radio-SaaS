@@ -11,8 +11,6 @@ class Streaming {
     required this.logoUrl,
     required this.colorHex,
     this.colorSecundarioHex = '#35ACE5',
-    required this.showOnHome,
-    required this.mostrarProgramacion,
     required this.playCount,
     this.statsUpdatedAt,
   });
@@ -23,8 +21,6 @@ class Streaming {
   final String logoUrl;
   final String colorHex;
   final String colorSecundarioHex;
-  final bool showOnHome;
-  final bool mostrarProgramacion;
   final int playCount;
   final DateTime? statsUpdatedAt;
 
@@ -41,8 +37,6 @@ class Streaming {
       logoUrl: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.logoUrl]),
       colorHex: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.colorHex]),
       colorSecundarioHex: d[EmisoraFields.colorSecundarioHex] as String? ?? FirestoreTypedValue.toFirestoreString(d[EmisoraFields.colorHex]),
-      showOnHome: FirestoreTypedValue.toFirestoreBool(d[EmisoraFields.showOnHome]),
-      mostrarProgramacion: d[EmisoraFields.mostrarProgramacion] as bool? ?? true,
       playCount: (stats[EmisoraFields.statsPlayCount] as num?)?.toInt() ?? 0,
       statsUpdatedAt: ts?.toDate(),
     );
@@ -55,8 +49,6 @@ class Streaming {
         'logoUrl': logoUrl,
         'colorHex': colorHex,
         'colorSecundarioHex': colorSecundarioHex,
-        'showOnHome': showOnHome,
-        'mostrarProgramacion': mostrarProgramacion,
         'playCount': playCount,
         'statsUpdatedAt': statsUpdatedAt?.toIso8601String(),
       };
@@ -69,8 +61,6 @@ class Streaming {
       logoUrl: json['logoUrl'] as String? ?? '',
       colorHex: json['colorHex'] as String? ?? '',
       colorSecundarioHex: json['colorSecundarioHex'] as String? ?? json['colorHex'] as String? ?? '#35ACE5',
-      showOnHome: json['showOnHome'] as bool? ?? false,
-      mostrarProgramacion: json['mostrarProgramacion'] as bool? ?? true,
       playCount: (json['playCount'] as num?)?.toInt() ?? 0,
       statsUpdatedAt: json['statsUpdatedAt'] != null ? DateTime.tryParse(json['statsUpdatedAt'] as String) : null,
     );
@@ -83,8 +73,6 @@ class Streaming {
     String? logoUrl,
     String? colorHex,
     String? colorSecundarioHex,
-    bool? showOnHome,
-    bool? mostrarProgramacion,
     int? playCount,
     DateTime? statsUpdatedAt,
   }) {
@@ -95,8 +83,6 @@ class Streaming {
       logoUrl: logoUrl ?? this.logoUrl,
       colorHex: colorHex ?? this.colorHex,
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
-      showOnHome: showOnHome ?? this.showOnHome,
-      mostrarProgramacion: mostrarProgramacion ?? this.mostrarProgramacion,
       playCount: playCount ?? this.playCount,
       statsUpdatedAt: statsUpdatedAt ?? this.statsUpdatedAt,
     );

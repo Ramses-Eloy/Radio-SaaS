@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +16,7 @@ class StationProvider extends ChangeNotifier {
   String _activeAppId = 'erancon';
   String get activeAppId => _activeAppId;
 
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
 
   bool _isLoading = true;
@@ -88,10 +89,11 @@ class StationProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final saved = prefs.getString('app_theme_mode');
-      if (saved == 'light') {
-        _themeMode = ThemeMode.light;
-      } else if (saved == 'dark') {
-        _themeMode = ThemeMode.dark;
+      if (saved != null) {
+        _themeMode = ThemeMode.values.firstWhere(
+          (e) => e.name == saved,
+          orElse: () => ThemeMode.system,
+        );
       }
       notifyListeners();
     } catch (_) {
@@ -105,7 +107,7 @@ class StationProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         'app_theme_mode',
-        _themeMode == ThemeMode.dark ? 'dark' : 'light',
+        _themeMode.name,
       );
     } catch (_) {}
   }
@@ -144,6 +146,14 @@ class StationProvider extends ChangeNotifier {
           _splashDurationSec = (data['splash_duration_sec'] ?? _splashDurationSec) is int
               ? data['splash_duration_sec'] ?? _splashDurationSec
               : _splashDurationSec;
+
+          // Cache splash settings for instantaneous load on next app launch
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('splash_url_$_activeAppId', _splashUrl);
+            await prefs.setBool('splash_enabled_$_activeAppId', _splashEnabled);
+            await prefs.setInt('splash_duration_sec_$_activeAppId', _splashDurationSec);
+          } catch (_) {}
 
           // Parse feature flags from marcas document
           final oldFeatures = _features;
@@ -309,8 +319,13 @@ class StationProvider extends ChangeNotifier {
     );
   }
 
-  ThemeConfig get activeThemeConfig =>
-      _themeMode == ThemeMode.dark ? currentStation.darkTheme : currentStation.lightTheme;
+  ThemeConfig get activeThemeConfig {
+    if (_themeMode == ThemeMode.system) {
+      final brightness = PlatformDispatcher.instance.platformBrightness;
+      return brightness == Brightness.dark ? currentStation.darkTheme : currentStation.lightTheme;
+    }
+    return _themeMode == ThemeMode.dark ? currentStation.darkTheme : currentStation.lightTheme;
+  }
 
   void toggleTheme() {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
@@ -404,7 +419,6 @@ class StationProvider extends ChangeNotifier {
     required String name,
     required String streamUrl,
     required String imageUrl,
-    required bool showOnHome,
     required bool showSchedule,
   }) async {
     final index = _tvChannels.indexWhere((t) => t.id == channelId);
@@ -414,7 +428,6 @@ class StationProvider extends ChangeNotifier {
         name: name,
         streamUrl: streamUrl,
         imageUrl: imageUrl,
-        showOnHome: showOnHome,
         showSchedule: showSchedule,
       );
       notifyListeners();
@@ -426,7 +439,6 @@ class StationProvider extends ChangeNotifier {
       nombre: name,
       urlVideo: streamUrl,
       logoUrl: imageUrl,
-      showOnHome: showOnHome,
       mostrarProgramacion: showSchedule,
     );
   }

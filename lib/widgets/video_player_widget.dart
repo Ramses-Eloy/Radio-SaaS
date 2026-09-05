@@ -239,7 +239,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return Container(
       color: Colors.black,
       child: const Center(
-        child: Icon(Icons.live_tv_rounded, color: Colors.purpleAccent, size: 48),
+        child: Icon(Icons.tv, color: Colors.purpleAccent, size: 48),
       ),
     );
   }

@@ -96,7 +96,6 @@ class FirestoreService {
           streamUrl: data['url_video'] ?? '',
           imageUrl: data['logo_url'] ?? '',
           colorHex: data['color_hex'] ?? '#35ACE5',
-          showOnHome: data['show_on_home'] ?? true,
           showSchedule: data['mostrar_programacion'] ?? false,
         );
       }).toList();
@@ -231,7 +230,6 @@ class FirestoreService {
       'nombre': nombre,
       'url_video': '',
       'logo_url': 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-      'show_on_home': true,
       'mostrar_programacion': true,
       'isVideo': true,
     });
@@ -293,7 +291,6 @@ class FirestoreService {
     required String nombre,
     required String urlVideo,
     required String logoUrl,
-    required bool showOnHome,
     required bool mostrarProgramacion,
   }) async {
     await _db.collection('streamings').doc(channelId).set({
@@ -301,7 +298,6 @@ class FirestoreService {
       'nombre': nombre,
       'url_video': urlVideo,
       'logo_url': logoUrl,
-      'show_on_home': showOnHome,
       'mostrar_programacion': mostrarProgramacion,
       'isVideo': true,
     }, SetOptions(merge: true));
@@ -415,7 +411,6 @@ class FirestoreService {
             nombre: 'Jurado del Pueblo TV',
             urlVideo: 'https://www.youtube.com/live/C6aKV_ePz60',
             logoUrl: 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-            showOnHome: true,
             mostrarProgramacion: true,
           );
         } else {
@@ -479,7 +474,6 @@ class FirestoreService {
             nombre: 'Fabulosa Streaming TV',
             urlVideo: 'https://www.streaming507.net:2000/live',
             logoUrl: 'https://i.postimg.cc/8P5kqbK1/file-000.png',
-            showOnHome: true,
             mostrarProgramacion: false,
           );
           await updateStreamingTv(
@@ -488,7 +482,6 @@ class FirestoreService {
             nombre: 'Jurado del Pueblo TV',
             urlVideo: 'https://www.youtube.com/live/C6aKV_ePz60',
             logoUrl: 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-            showOnHome: true,
             mostrarProgramacion: true,
           );
         }

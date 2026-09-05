@@ -21,36 +21,16 @@ class ConfigureModulesDrawer extends StatefulWidget {
 class _ConfigureModulesDrawerState extends State<ConfigureModulesDrawer> {
   late AppFeatures _features;
   bool _saving = false;
-  String? _activePreset;
 
   @override
   void initState() {
     super.initState();
     _features = widget.marca.features;
-    _syncPresetLabel();
-  }
-
-  void _syncPresetLabel() {
-    if (_features == AppFeatures.presetSoloPlayer()) {
-      _activePreset = 'Solo Player';
-    } else if (_features == AppFeatures.presetFullSuite()) {
-      _activePreset = 'Full Suite';
-    } else {
-      _activePreset = null; // Personalizado
-    }
-  }
-
-  void _applyPreset(AppFeatures preset, String label) {
-    setState(() {
-      _features = preset;
-      _activePreset = label;
-    });
   }
 
   void _updateFeature(AppFeatures updated) {
     setState(() {
       _features = updated;
-      _syncPresetLabel();
     });
   }
 
@@ -123,49 +103,7 @@ class _ConfigureModulesDrawerState extends State<ConfigureModulesDrawer> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            // ─── PLAN PRESETS ───
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PLAN PRESETS',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      letterSpacing: 1.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PresetCard(
-                          icon: Icons.radio,
-                          label: 'Solo Player',
-                          selected: _activePreset == 'Solo Player',
-                          scheme: scheme,
-                          onTap: () => _applyPreset(AppFeatures.presetSoloPlayer(), 'Solo Player'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _PresetCard(
-                          icon: Icons.diamond,
-                          label: 'Full Suite',
-                          selected: _activePreset == 'Full Suite',
-                          scheme: scheme,
-                          onTap: () => _applyPreset(AppFeatures.presetFullSuite(), 'Full Suite'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+
             // ─── MODULE CONFIGURATION ───
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -183,17 +121,9 @@ class _ConfigureModulesDrawerState extends State<ConfigureModulesDrawer> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 children: [
+
                   _ModuleSwitch(
-                    icon: Icons.radio,
-                    title: 'Radio Streaming',
-                    subtitle: 'Core audio player module',
-                    value: _features.enableRadio,
-                    onChanged: (v) => _updateFeature(_features.copyWith(enableRadio: v)),
-                    scheme: scheme,
-                  ),
-                  const Divider(height: 1),
-                  _ModuleSwitch(
-                    icon: Icons.live_tv,
+                    icon: Icons.tv,
                     title: 'TV / Video Stream',
                     subtitle: 'Video player integration',
                     value: _features.enableTv,
@@ -210,17 +140,9 @@ class _ConfigureModulesDrawerState extends State<ConfigureModulesDrawer> {
                     scheme: scheme,
                   ),
                   const Divider(height: 1),
+
                   _ModuleSwitch(
-                    icon: Icons.settings,
-                    title: 'Advanced Settings',
-                    subtitle: 'Client self-service config',
-                    value: _features.enableSettings,
-                    onChanged: (v) => _updateFeature(_features.copyWith(enableSettings: v)),
-                    scheme: scheme,
-                  ),
-                  const Divider(height: 1),
-                  _ModuleSwitch(
-                    icon: Icons.cell_tower,
+                    icon: Icons.podcasts,
                     title: 'Multi-Emisora',
                     subtitle: 'Network selector UI',
                     value: _features.enableMultiStation,
@@ -256,59 +178,6 @@ class _ConfigureModulesDrawerState extends State<ConfigureModulesDrawer> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PresetCard extends StatelessWidget {
-  const _PresetCard({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.scheme,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final ColorScheme scheme;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected
-          ? scheme.primaryContainer.withValues(alpha: 0.5)
-          : scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? scheme.primary : scheme.outlineVariant,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 28, color: selected ? scheme.primary : scheme.onSurfaceVariant),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: selected ? scheme.primary : scheme.onSurfaceVariant,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-              ),
-            ],
-          ),
         ),
       ),
     );

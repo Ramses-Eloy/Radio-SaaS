@@ -5,7 +5,6 @@ class TvChannel {
   final String imageUrl;
   final String colorHex;
   final String colorSecundarioHex;
-  final bool showOnHome;
   final bool showSchedule;
 
   TvChannel({
@@ -15,7 +14,6 @@ class TvChannel {
     required this.imageUrl,
     this.colorHex = '#35ACE5',
     this.colorSecundarioHex = '#35ACE5',
-    this.showOnHome = true,
     this.showSchedule = false,
   });
 
@@ -27,7 +25,6 @@ class TvChannel {
       imageUrl: json['imageUrl'] ?? '',
       colorHex: json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
       colorSecundarioHex: json['colorSecundarioHex'] ?? json['color_secundario_hex'] ?? json['colorHex'] ?? json['color_hex'] ?? '#35ACE5',
-      showOnHome: json['showOnHome'] ?? true,
       showSchedule: json['showSchedule'] ?? false,
     );
   }
@@ -39,7 +36,6 @@ class TvChannel {
         'imageUrl': imageUrl,
         'colorHex': colorHex,
         'colorSecundarioHex': colorSecundarioHex,
-        'showOnHome': showOnHome,
         'showSchedule': showSchedule,
       };
 
@@ -50,7 +46,6 @@ class TvChannel {
     String? imageUrl,
     String? colorHex,
     String? colorSecundarioHex,
-    bool? showOnHome,
     bool? showSchedule,
   }) {
     return TvChannel(
@@ -60,7 +55,6 @@ class TvChannel {
       imageUrl: imageUrl ?? this.imageUrl,
       colorHex: colorHex ?? this.colorHex,
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
-      showOnHome: showOnHome ?? this.showOnHome,
       showSchedule: showSchedule ?? this.showSchedule,
     );
   }

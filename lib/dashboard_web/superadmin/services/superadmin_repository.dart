@@ -1,11 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../models/app_features.dart';
 
 /// Repositorio exclusivo del SuperAdmin para gestionar marcas / tenants.
 /// Maneja lectura global de marcas, actualización de módulos y alta automatizada.
 class SuperAdminRepository {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
+
+  /// Public accessor for Firestore (used by callers that need direct updates after creation).
+  FirebaseFirestore get db => _db;
 
   /// Correo del SuperAdmin con acceso total.
   static const String superAdminEmail = 'rsarsanedasg@gmail.com';
@@ -65,76 +69,28 @@ class SuperAdminRepository {
     final normalizedAppId = appId.trim().toLowerCase();
     final normalizedEmail = ownerEmail.trim().toLowerCase();
 
-    // Validar que el appId no exista
-    final existing = await _db.collection('marcas').doc(normalizedAppId).get();
-    if (existing.exists) {
-      return 'Ya existe una marca con el identificador "$normalizedAppId".';
-    }
-
     try {
-      // 1. Crear documento en `marcas/{appId}`
-      await _db.collection('marcas').doc(normalizedAppId).set({
+      // Llamar a la Cloud Function `createBrand`
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('createBrand');
+      
+      final result = await callable.call({
         'appId': normalizedAppId,
-        'nombre_grupo': nombreGrupo,
+        'nombreGrupo': nombreGrupo,
         'ownerEmail': normalizedEmail,
-        'logo_url': '',
-        'color_hex': '#205CC6',
-        'splash_url': '',
-        'banner_home_url': '',
-        'splash_enabled': true,
-        'splash_duration_sec': 5,
-        'radio_label': 'En Vivo',
-        'tv_label': 'Video Live',
-        'schedule_label': 'Programación',
+        'password': password,
         'features': features.toMap(),
-        'created_at': FieldValue.serverTimestamp(),
-        'active': true,
       });
-
-      // 2. Crear emisora inicial en `emisoras` con todos los campos estándar
-      final emisoraRef = _db.collection('emisoras').doc('${normalizedAppId}_1');
-      await emisoraRef.set({
-        'appId': normalizedAppId,
-        'ownerEmail': normalizedEmail,
-        'nombre': nombreGrupo,
-        'slogan': 'La mejor música',
-        'logo_url': '',
-        'color_hex': '#205CC6',
-        'color_secundario_hex': '#35ACE5',
-        'mostrar_programacion': features.enableSchedule,
-        'url_audio': '',
-        'url_video': '',
-        'telefono_cabina': '',
-        'social_whatsapp': '',
-        'social_facebook': '',
-        'social_instagram': '',
-        'social_x': '',
-        'social_tiktok': '',
-      });
-
-      // 3. Crear usuario en Firebase Auth
-      // Nota: Esto requiere que el proyecto tenga habilitada la autenticación
-      // por email/password. Si ya existe el usuario, se captura el error.
-      try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: normalizedEmail,
-          password: password,
-        );
-        // Cerrar la sesión recién creada para mantener al SuperAdmin logueado
-        // Firebase Auth automáticamente loguea al usuario recién creado,
-        // así que necesitamos re-autenticar al SuperAdmin
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'email-already-in-use') {
-          // El usuario ya existe en Auth, no es un error fatal
-        } else {
-          // Revertir documentos creados si falla Auth
-          await _db.collection('marcas').doc(normalizedAppId).delete();
-          await emisoraRef.delete();
-          return 'Error al crear el usuario: ${e.message}';
-        }
+      
+      if (result.data['success'] == true) {
+        return null; // Éxito
+      } else {
+        return 'Error inesperado del servidor al crear la marca.';
       }
-
-      return null; // Éxito
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'already-exists') {
+        return 'Ya existe una marca con el identificador "$normalizedAppId".';
+      }
+      return 'Error [${e.code}]: ${e.message}';
     } catch (e) {
       return 'Error inesperado: $e';
     }
@@ -147,17 +103,41 @@ class SuperAdminRepository {
   /// Actualiza los datos editables de una marca existente.
   Future<void> updateMarcaDetails({
     required String appId,
+    required String currentEmail, // email actual de la marca, para buscar el Auth User
     String? nombreGrupo,
-    String? ownerEmail,
+    String? newOwnerEmail,
+    String? newPassword,
     bool? active,
   }) async {
+    // 1. Actualizar en Firebase Auth mediante Cloud Function (solo si cambia correo o contraseña)
+    if (newOwnerEmail != null || (newPassword != null && newPassword.trim().isNotEmpty)) {
+      try {
+        final callable = FirebaseFunctions.instance.httpsCallable('updateUserCredentials');
+        await callable.call({
+          'appId': appId,
+          'currentEmail': currentEmail,
+          'newEmail': newOwnerEmail,
+          'newPassword': newPassword,
+        });
+      } catch (e) {
+        throw Exception('Error actualizando credenciales en Auth: $e');
+      }
+    }
+
+    final batch = _db.batch();
+
+    // 2. Actualizar marca
     final updates = <String, dynamic>{};
     if (nombreGrupo != null) updates['nombre_grupo'] = nombreGrupo;
-    if (ownerEmail != null) updates['ownerEmail'] = ownerEmail.trim().toLowerCase();
     if (active != null) updates['active'] = active;
+    
     if (updates.isNotEmpty) {
-      await _db.collection('marcas').doc(appId).set(updates, SetOptions(merge: true));
+      batch.set(_db.collection('marcas').doc(appId), updates, SetOptions(merge: true));
     }
+
+
+
+    await batch.commit();
   }
 
   /// Actualiza la contraseña de un usuario por su email.
@@ -190,6 +170,140 @@ class SuperAdminRepository {
     }
 
     await batch.commit();
+  }
+
+  // ─────────────────────────────────────────────
+  // GESTIÓN DE EMISORAS (RADIOS)
+  // ─────────────────────────────────────────────
+
+  Stream<List<SuperAdminEmisoraRecord>> streamEmisoras(String appId) {
+    return _db.collection('emisoras').where('appId', isEqualTo: appId).snapshots().map((snap) {
+      return snap.docs.map((doc) => SuperAdminEmisoraRecord.fromFirestore(doc)).toList();
+    });
+  }
+
+  Future<String> _getNextSequentialId(String collection, String appId) async {
+    final snapshot = await _db.collection(collection).where('appId', isEqualTo: appId).get();
+    int maxSuffix = 0;
+    for (final doc in snapshot.docs) {
+      final parts = doc.id.split('_');
+      if (parts.length > 1) {
+        final suffix = int.tryParse(parts.last);
+        if (suffix != null && suffix > maxSuffix) {
+          maxSuffix = suffix;
+        }
+      }
+    }
+    return '${appId}_${maxSuffix + 1}';
+  }
+
+  Future<String> _getNextStreamingId(String appId) async {
+    final snapshot = await _db.collection('streamings').where('appId', isEqualTo: appId).get();
+    if (snapshot.docs.isEmpty) {
+      return '${appId}_live';
+    }
+    int maxSuffix = 1;
+    for (final doc in snapshot.docs) {
+      final parts = doc.id.split('_live');
+      if (parts.length > 1) {
+        final suffixStr = parts.last;
+        if (suffixStr.isEmpty) {
+          if (1 > maxSuffix) maxSuffix = 1;
+        } else {
+          final suffix = int.tryParse(suffixStr);
+          if (suffix != null && suffix > maxSuffix) {
+            maxSuffix = suffix;
+          }
+        }
+      }
+    }
+    return '${appId}_live${maxSuffix + 1}';
+  }
+
+  Future<String> createEmisora({
+    required String appId,
+    required String ownerEmail,
+    required String nombre,
+    required String urlAudio,
+    String logoUrl = '',
+    String colorHex = '#205CC6',
+    String colorSecundarioHex = '#35ACE5',
+    bool mostrarProgramacion = false,
+    String telefonoCabina = '',
+    String socialWhatsapp = '',
+    String socialFacebook = '',
+    String socialInstagram = '',
+    String socialX = '',
+  }) async {
+    final newId = await _getNextSequentialId('emisoras', appId);
+    final docRef = _db.collection('emisoras').doc(newId);
+    
+    await docRef.set({
+      'appId': appId,
+      'ownerEmail': ownerEmail,
+      'nombre': nombre,
+      'slogan': '',
+      'logo_url': logoUrl,
+      'color_hex': colorHex,
+      'color_secundario_hex': colorSecundarioHex,
+      'mostrar_programacion': mostrarProgramacion,
+      'isVideo': false,
+      'url_audio': urlAudio,
+      'url_video': '',
+      'telefono_cabina': telefonoCabina,
+      'social_whatsapp': socialWhatsapp,
+      'social_facebook': socialFacebook,
+      'social_instagram': socialInstagram,
+      'social_x': socialX,
+      'social_tiktok': '',
+      'youtube_url': '',
+      'created_at': FieldValue.serverTimestamp(),
+    });
+    
+    return newId;
+  }
+
+  Future<void> deleteEmisora(String id) async {
+    await _db.collection('emisoras').doc(id).delete();
+  }
+
+  // ─────────────────────────────────────────────
+  // GESTIÓN DE STREAMINGS (TV)
+  // ─────────────────────────────────────────────
+
+  Stream<List<SuperAdminStreamingRecord>> streamStreamings(String appId) {
+    return _db.collection('streamings').where('appId', isEqualTo: appId).snapshots().map((snap) {
+      return snap.docs.map((doc) => SuperAdminStreamingRecord.fromFirestore(doc)).toList();
+    });
+  }
+
+  Future<String> createStreaming({
+    required String appId,
+    required String ownerEmail,
+    required String nombre,
+    required String urlVideo,
+    String logoUrl = '',
+    String colorHex = '#10B981',
+  }) async {
+    final newId = await _getNextStreamingId(appId);
+    final docRef = _db.collection('streamings').doc(newId);
+    
+    await docRef.set({
+      'appId': appId,
+      'ownerEmail': ownerEmail,
+      'nombre': nombre,
+      'url_video': urlVideo,
+      'logo_url': logoUrl,
+      'color_hex': colorHex,
+      'color_secundario_hex': '#059669',
+      'created_at': FieldValue.serverTimestamp(),
+    });
+
+    return newId;
+  }
+
+  Future<void> deleteStreaming(String id) async {
+    await _db.collection('streamings').doc(id).delete();
   }
 }
 
@@ -240,6 +354,62 @@ class MarcaRecord {
       features: AppFeatures.fromMap(data),
       active: data['active'] as bool? ?? true,
       createdAt: created,
+    );
+  }
+}
+
+/// Modelo ligero para emisoras (Radios) en el Super Admin
+class SuperAdminEmisoraRecord {
+  final String id;
+  final String appId;
+  final String nombre;
+  final String urlAudio;
+  final bool isVideo;
+
+  const SuperAdminEmisoraRecord({
+    required this.id,
+    required this.appId,
+    required this.nombre,
+    required this.urlAudio,
+    required this.isVideo,
+  });
+
+  factory SuperAdminEmisoraRecord.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    return SuperAdminEmisoraRecord(
+      id: doc.id,
+      appId: data['appId'] as String? ?? '',
+      nombre: data['nombre'] as String? ?? 'Sin nombre',
+      urlAudio: data['url_audio'] as String? ?? '',
+      isVideo: data['isVideo'] as bool? ?? false,
+    );
+  }
+}
+
+/// Modelo ligero para streamings (TV) en el Super Admin
+class SuperAdminStreamingRecord {
+  final String id;
+  final String appId;
+  final String nombre;
+  final String urlVideo;
+  final bool isVideo;
+
+  const SuperAdminStreamingRecord({
+    required this.id,
+    required this.appId,
+    required this.nombre,
+    required this.urlVideo,
+    required this.isVideo,
+  });
+
+  factory SuperAdminStreamingRecord.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    return SuperAdminStreamingRecord(
+      id: doc.id,
+      appId: data['appId'] as String? ?? '',
+      nombre: data['nombre'] as String? ?? 'Sin nombre',
+      urlVideo: data['url_video'] as String? ?? '',
+      isVideo: data['isVideo'] as bool? ?? true,
     );
   }
 }

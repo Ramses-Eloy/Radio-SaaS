@@ -40,7 +40,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions androidSira = FirebaseOptions(
     apiKey: 'AIzaSyBW0nQtxz_vfrdTLTOZxzenuXR_dtngPPo',
-    appId: '1:310808715575:android:f59d106dc7faa4906f3ab2',
+    appId: '1:310808715575:android:2abf997b7b5a93686f3ab2',
     messagingSenderId: '310808715575',
     projectId: 'radio-saas-platform',
     storageBucket: 'radio-saas-platform.firebasestorage.app',

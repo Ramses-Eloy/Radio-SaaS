@@ -195,8 +195,6 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
         EmisoraFields.logoUrl: FirestoreTypedValue.toFirestoreString(_logoUrl.text),
         EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
         EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
-        EmisoraFields.showOnHome: false,
-        EmisoraFields.mostrarProgramacion: false,
       };
       await widget.repository.updateStreamingFields(
         widget.streaming.id,
@@ -210,8 +208,6 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
           logoUrl: payload[EmisoraFields.logoUrl] as String,
           colorHex: payload[EmisoraFields.colorHex] as String,
           colorSecundarioHex: payload[EmisoraFields.colorSecundarioHex] as String,
-          showOnHome: false,
-          mostrarProgramacion: false,
         ),
       );
       if (!mounted) return;

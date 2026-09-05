@@ -22,14 +22,20 @@ class _NewBrandModalState extends State<NewBrandModal> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String _selectedPlan = 'Solo Player';
+  bool _enableTv = true;
+  bool _enableSchedule = true;
+
   bool _obscurePassword = true;
   bool _saving = false;
   String? _error;
 
-  AppFeatures get _planFeatures => _selectedPlan == 'Full Suite'
-      ? AppFeatures.presetFullSuite()
-      : AppFeatures.presetSoloPlayer();
+  AppFeatures get _features => AppFeatures(
+        enableRadio: true,
+        enableTv: _enableTv,
+        enableSchedule: _enableSchedule,
+        enableSettings: true,
+        enableMultiStation: true,
+      );
 
   Future<void> _create() async {
     if (!_formKey.currentState!.validate()) return;
@@ -48,7 +54,7 @@ class _NewBrandModalState extends State<NewBrandModal> {
       nombreGrupo: _nombreController.text.trim(),
       ownerEmail: _emailController.text.trim().toLowerCase(),
       password: _passwordController.text,
-      features: _planFeatures,
+      features: _features,
     );
 
     if (errorMsg != null) {
@@ -221,36 +227,37 @@ class _NewBrandModalState extends State<NewBrandModal> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // ─── PLAN SELECTOR ───
+                  // ─── CONFIGURACIÓN DE MÓDULOS ───
                   Text(
-                    'Seleccionar Plan',
+                    'Módulos Iniciales',
                     style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PlanCard(
-                          title: 'Plan Básico: Solo Player',
-                          description: 'Incluye reproductor de audio, redes sociales, banners publicitarios y telemetría.',
-                          icon: Icons.radio,
-                          selected: _selectedPlan == 'Solo Player',
-                          scheme: scheme,
-                          onTap: () => setState(() => _selectedPlan = 'Solo Player'),
+                  Card(
+                    elevation: 0,
+                    color: scheme.surfaceContainerLow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: scheme.outlineVariant, width: 1),
+                    ),
+                    child: Column(
+                      children: [
+
+                        SwitchListTile.adaptive(
+                          title: const Text('Video / TV Player'),
+                          subtitle: const Text('Reproductor de streaming de video HLS'),
+                          value: _enableTv,
+                          onChanged: (v) => setState(() => _enableTv = v),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _PlanCard(
-                          title: 'Plan Full Suite',
-                          description: 'Incluye todo lo anterior + Canales de Video/TV + Parrilla de Programación + Multi-Emisora.',
-                          icon: Icons.diamond,
-                          selected: _selectedPlan == 'Full Suite',
-                          scheme: scheme,
-                          onTap: () => setState(() => _selectedPlan = 'Full Suite'),
+                        const Divider(height: 1),
+                        SwitchListTile.adaptive(
+                          title: const Text('Programación'),
+                          subtitle: const Text('Parrilla de shows y locutores'),
+                          value: _enableSchedule,
+                          onChanged: (v) => setState(() => _enableSchedule = v),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   // ─── ERROR ───
                   if (_error != null) ...[
@@ -308,72 +315,3 @@ class _NewBrandModalState extends State<NewBrandModal> {
   }
 }
 
-class _PlanCard extends StatelessWidget {
-  const _PlanCard({
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.selected,
-    required this.scheme,
-    required this.onTap,
-  });
-
-  final String title;
-  final String description;
-  final IconData icon;
-  final bool selected;
-  final ColorScheme scheme;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected
-          ? scheme.primaryContainer.withValues(alpha: 0.4)
-          : scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected ? scheme.primary : scheme.outlineVariant,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, size: 22, color: selected ? scheme.primary : scheme.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: selected ? scheme.primary : scheme.onSurface,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      height: 1.3,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -19,7 +19,7 @@ import 'screens/player_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/video_stream_screen.dart';
 import 'screens/settings_screen.dart';
-import 'widgets/splash_ad_dialog.dart';
+import 'screens/gateway_screen.dart';
 import 'widgets/persistent_bottom_banner.dart';
 import 'widgets/floating_pip_overlay.dart';
 import 'services/telemetry_service.dart';
@@ -214,7 +214,8 @@ class RadioWhiteLabelApp extends StatelessWidget {
               return FloatingPipOverlay(child: child ?? const SizedBox.shrink());
             },
             routes: {
-              '/': (context) => const MainNavigationFrame(),
+              '/': (context) => GatewayScreen(appId: stationProvider.activeAppId),
+              '/home': (context) => const MainNavigationFrame(),
               '/login': (context) => const LoginScreen(),
               '/admin': (context) => const AdminDashboardScreen(),
               '/app': (context) => const MainNavigationFrame(),
@@ -235,16 +236,13 @@ class MainNavigationFrame extends StatefulWidget {
 
 class _MainNavigationFrameState extends State<MainNavigationFrame> {
   int _currentIndex = 0;
-  bool _splashShown = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final stationProvider = context.read<StationProvider>();
-      stationProvider.addListener(_syncAdConfig);
-      _syncAdConfig(); // Sync immediately if data is already loaded
-
+      
       // Initialize telemetry batching with current appId
       TelemetryService().initialize(appId: stationProvider.activeAppId);
     });
@@ -252,38 +250,9 @@ class _MainNavigationFrameState extends State<MainNavigationFrame> {
 
   @override
   void dispose() {
-    context.read<StationProvider>().removeListener(_syncAdConfig);
     // Flush any pending telemetry data before the app closes
     TelemetryService().flushAndDispose();
     super.dispose();
-  }
-
-  void _syncAdConfig() {
-    if (!mounted) return;
-    final sp = context.read<StationProvider>();
-    final adProvider = context.read<AdProvider>();
-
-    adProvider.syncMarcaAdConfig(
-      splashUrl: sp.splashUrl,
-      bannerHomeUrl: sp.brandBannerHomeUrl,
-    );
-
-    // Show splash only once, and only if splash is enabled and has a URL
-    if (!_splashShown && sp.splashEnabled && sp.splashUrl.isNotEmpty) {
-      _splashShown = true;
-      sp.setSplashShowing(true);
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        useSafeArea: false,
-        builder: (_) => SplashAdDialog(),
-      ).then((_) {
-        // Safe to check mounted, but sp is a reference we already have.
-        if (mounted) {
-          context.read<StationProvider>().setSplashShowing(false);
-        }
-      });
-    }
   }
 
   /// Builds the list of active screens and their corresponding nav bar items

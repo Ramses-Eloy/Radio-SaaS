@@ -11,6 +11,7 @@ import 'package:radio_whitelabel/dashboard_web/models/marca_summary.dart';
 import 'package:radio_whitelabel/dashboard_web/models/streaming.dart';
 import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/tenant_scope.dart';
+import 'package:radio_whitelabel/models/app_features.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Estado global en memoria + caché local. El [currentAppId] se resuelve tras el login.
@@ -103,11 +104,13 @@ class ClientDataStore extends ChangeNotifier {
       await _purgeLegacyDiskCache(normalized);
 
       AppInfo? infoFromCache;
+      AppFeatures? featuresFromCache;
       final cached = await _loadFromDisk(normalized, _currentAppId!);
       if (cached != null && !_isStaleCache(cached)) {
         infoFromCache = cached.info;
+        featuresFromCache = cached.features;
       }
-      await _initializeSessionData(marcaDoc, infoFromCache);
+      await _initializeSessionData(marcaDoc, infoFromCache, featuresFromCache);
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -275,6 +278,7 @@ class ClientDataStore extends ChangeNotifier {
   Future<void> _initializeSessionData(
     DocumentSnapshot<Map<String, dynamic>>? marcaDoc,
     AppInfo? infoFromCache,
+    AppFeatures? featuresFromCache,
   ) async {
     final appId = _currentAppId;
     final loginEmail = _ownerEmail;
@@ -287,6 +291,7 @@ class ClientDataStore extends ChangeNotifier {
     }
 
     final info = marcaDoc != null ? AppInfo.fromDoc(marcaDoc) : infoFromCache;
+    final features = marcaDoc != null ? AppFeatures.fromMap(marcaDoc.data()) : featuresFromCache;
 
     _data = ClientDashboardData(
       prefix: appId,
@@ -294,6 +299,7 @@ class ClientDataStore extends ChangeNotifier {
       radios: const [],
       streamings: const [],
       unknownIds: const [],
+      features: features ?? const AppFeatures(),
       syncedAt: DateTime.now(),
     );
 

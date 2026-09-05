@@ -125,6 +125,21 @@ class EmisoraRepository {
     );
   }
 
+  Future<String> _getNextSequentialId(String collection, String appId) async {
+    final snapshot = await _db.collection(collection).where(EmisoraFields.appId, isEqualTo: appId).get();
+    int maxSuffix = 0;
+    for (final doc in snapshot.docs) {
+      final parts = doc.id.split('_');
+      if (parts.length > 1) {
+        final suffix = int.tryParse(parts.last);
+        if (suffix != null && suffix > maxSuffix) {
+          maxSuffix = suffix;
+        }
+      }
+    }
+    return '${appId}_${maxSuffix + 1}';
+  }
+
   /// Crea una emisora con `appId` y `ownerEmail` de la marca activa.
   Future<String> createEmisora({
     required String ownerEmail,
@@ -132,7 +147,8 @@ class EmisoraRepository {
     required Map<String, dynamic> data,
   }) async {
     final tenant = TenantScope.require(appId: appId, ownerEmail: ownerEmail);
-    final ref = _db.collection(EmisoraFields.collection).doc();
+    final newId = await _getNextSequentialId(EmisoraFields.collection, tenant.appId);
+    final ref = _db.collection(EmisoraFields.collection).doc(newId);
     await ref.set({
       EmisoraFields.ownerEmail: tenant.ownerEmail,
       EmisoraFields.appId: tenant.appId,
@@ -262,7 +278,8 @@ class EmisoraRepository {
     required Map<String, dynamic> data,
   }) async {
     final tenant = TenantScope.require(appId: appId, ownerEmail: ownerEmail);
-    final ref = _db.collection(EmisoraFields.streamingsCollection).doc();
+    final newId = await _getNextSequentialId(EmisoraFields.streamingsCollection, tenant.appId);
+    final ref = _db.collection(EmisoraFields.streamingsCollection).doc(newId);
     await ref.set({
       EmisoraFields.ownerEmail: tenant.ownerEmail,
       EmisoraFields.appId: tenant.appId,

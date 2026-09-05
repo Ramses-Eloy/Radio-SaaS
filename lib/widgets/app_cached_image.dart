@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class AppCachedImage extends StatelessWidget {
+class AppCachedImage extends StatefulWidget {
   final String imageUrl;
   final BoxFit fit;
   final double? width;
@@ -26,43 +26,86 @@ class AppCachedImage extends StatelessWidget {
   });
 
   @override
+  State<AppCachedImage> createState() => _AppCachedImageState();
+}
+
+class _AppCachedImageState extends State<AppCachedImage> {
+  int _retryCount = 0;
+  final int _maxRetries = 3;
+
+  @override
+  void didUpdateWidget(covariant AppCachedImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _retryCount = 0;
+    }
+  }
+
+  void _handleError() {
+    if (_retryCount < _maxRetries) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _retryCount++;
+          });
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cleanUrl = imageUrl.trim();
+    final cleanUrl = widget.imageUrl.trim();
     if (cleanUrl.isEmpty) {
       return _buildFallback();
     }
 
     return CachedNetworkImage(
+      key: ValueKey('${cleanUrl}_$_retryCount'),
       imageUrl: cleanUrl,
-      width: width,
-      height: height,
-      fit: fit,
-      fadeInDuration: fadeInDuration,
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      fadeInDuration: widget.fadeInDuration,
       placeholder: (context, url) =>
-          placeholder ??
+          widget.placeholder ??
           Center(
             child: SizedBox(
-              width: (width != null && width! < 30) ? width! * 0.5 : 18.0,
-              height: (height != null && height! < 30) ? height! * 0.5 : 18.0,
+              width: (widget.width != null && widget.width! < 30) ? widget.width! * 0.5 : 18.0,
+              height: (widget.height != null && widget.height! < 30) ? widget.height! * 0.5 : 18.0,
               child: const CircularProgressIndicator(strokeWidth: 2.0),
             ),
           ),
-      errorWidget: (context, url, error) => errorWidget ?? _buildFallback(),
+      errorWidget: (context, url, error) {
+        if (_retryCount < _maxRetries) {
+          _handleError();
+          return widget.placeholder ??
+              Center(
+                child: SizedBox(
+                  width: (widget.width != null && widget.width! < 30) ? widget.width! * 0.5 : 18.0,
+                  height: (widget.height != null && widget.height! < 30) ? widget.height! * 0.5 : 18.0,
+                  child: const CircularProgressIndicator(strokeWidth: 2.0),
+                ),
+              );
+        }
+        return widget.errorWidget ?? _buildFallback();
+      },
     );
   }
 
   Widget _buildFallback() {
     return Container(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       color: Colors.white10,
       child: Center(
         child: Icon(
           Icons.radio,
-          size: fallbackIconSize,
-          color: fallbackIconColor ?? Colors.white70,
+          size: widget.fallbackIconSize,
+          color: widget.fallbackIconColor ?? Colors.white70,
         ),
       ),
     );
   }
 }
+

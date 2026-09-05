@@ -1,6 +1,7 @@
 import 'package:radio_whitelabel/dashboard_web/models/app_info.dart';
 import 'package:radio_whitelabel/dashboard_web/models/emisora.dart';
 import 'package:radio_whitelabel/dashboard_web/models/streaming.dart';
+import 'package:radio_whitelabel/models/app_features.dart';
 
 class ClientDashboardData {
   const ClientDashboardData({
@@ -9,6 +10,7 @@ class ClientDashboardData {
     required this.radios,
     required this.streamings,
     required this.unknownIds,
+    this.features,
     this.syncedAt,
   });
 
@@ -17,6 +19,7 @@ class ClientDashboardData {
   final List<Emisora> radios;
   final List<Streaming> streamings;
   final List<String> unknownIds;
+  final AppFeatures? features;
   final DateTime? syncedAt;
 
   Map<String, dynamic> toJson() => {
@@ -25,6 +28,7 @@ class ClientDashboardData {
         'radios': radios.map((e) => e.toJson()).toList(),
         'streamings': streamings.map((e) => e.toJson()).toList(),
         'unknownIds': unknownIds,
+        'features': features?.toMap(),
         'syncedAt': syncedAt?.toIso8601String(),
       };
 
@@ -41,6 +45,7 @@ class ClientDashboardData {
           .map(Streaming.fromJson)
           .toList(),
       unknownIds: (json['unknownIds'] as List<dynamic>? ?? const []).map((e) => e.toString()).toList(),
+      features: json['features'] is Map<String, dynamic> ? AppFeatures.fromMap(json['features'] as Map<String, dynamic>) : null,
       syncedAt: json['syncedAt'] != null ? DateTime.tryParse(json['syncedAt'] as String) : null,
     );
   }
@@ -51,6 +56,7 @@ class ClientDashboardData {
     List<Emisora>? radios,
     List<Streaming>? streamings,
     List<String>? unknownIds,
+    AppFeatures? features,
     DateTime? syncedAt,
   }) {
     return ClientDashboardData(
@@ -59,6 +65,7 @@ class ClientDashboardData {
       radios: radios ?? this.radios,
       streamings: streamings ?? this.streamings,
       unknownIds: unknownIds ?? this.unknownIds,
+      features: features ?? this.features,
       syncedAt: syncedAt ?? this.syncedAt,
     );
   }

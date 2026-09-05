@@ -47,3 +47,9 @@ app.*.map.json
 # Firebase
 .firebase/
 
+# Keystores and signing
+*.jks
+*.keystore
+android/key.properties
+
+node_modules

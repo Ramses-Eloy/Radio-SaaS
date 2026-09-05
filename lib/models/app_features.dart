@@ -57,12 +57,12 @@ class AppFeatures {
   /// Si el mapa es nulo o faltan claves, aplica valores por defecto seguros
   /// (Full Suite para retrocompatibilidad con marcas existentes sin `features`).
   factory AppFeatures.fromMap(Map<String, dynamic>? map) {
-    if (map == null) return AppFeatures.presetFullSuite();
+    if (map == null || !map.containsKey('features') || map['features'] is! Map) {
+      // Retro-compatibility: if no features map exists, assume it's an old brand with all features.
+      return AppFeatures.presetFullSuite();
+    }
 
-    // Soporta tanto `features: { ... }` anidado como campos en la raíz
-    final data = map.containsKey('features') && map['features'] is Map
-        ? Map<String, dynamic>.from(map['features'] as Map)
-        : map;
+    final data = Map<String, dynamic>.from(map['features'] as Map);
 
     return AppFeatures(
       enableRadio:

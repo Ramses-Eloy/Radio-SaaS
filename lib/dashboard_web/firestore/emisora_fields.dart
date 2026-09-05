@@ -23,7 +23,6 @@ abstract final class EmisoraFields {
   static const String socialFacebook = 'social_facebook';
   static const String socialX = 'social_x';
   static const String telefonoCabina = 'telefono_cabina';
-  static const String showOnHome = 'show_on_home';
   static const String index = 'index';
   static const String appId = 'appId';
   static const String targetId = 'targetId';
