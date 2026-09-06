@@ -101,88 +101,89 @@ class VideoStreamScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         // Thumbnail Stack
-                        Stack(
-                          children: [
-                            AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                                child: AppCachedImage(
-                                  imageUrl: tv.imageUrl,
-                                  fit: BoxFit.contain,
-                                  fallbackIconSize: 48,
-                                  fallbackIconColor: channelPrimary,
-                                ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TvDetailScreen(channel: tv),
                               ),
-                            ),
-
-                            // LIVE BADGE
-                            Positioned(
-                              top: 12,
-                              left: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.redAccent.withValues(alpha: 0.5),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                                child: const Row(
-                                  children: [
-                                    CircleAvatar(radius: 3.5, backgroundColor: Colors.white),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      'TRANSMISIÓN EN VIVO',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            // Quick Play Overlay Button
-                            Positioned.fill(
-                              child: Center(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => TvDetailScreen(channel: tv),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: activeTheme.primaryColor,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: activeTheme.primaryColor.withValues(alpha: 0.6),
-                                          blurRadius: 20,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      isCurrentPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                                      size: 38,
-                                      color: Colors.black,
-                                    ),
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                                  child: AppCachedImage(
+                                    imageUrl: tv.imageUrl,
+                                    fit: BoxFit.contain,
+                                    fallbackIconSize: 48,
+                                    fallbackIconColor: channelPrimary,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+
+                              // LIVE BADGE
+                              Positioned(
+                                top: 12,
+                                left: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.redAccent.withValues(alpha: 0.5),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      CircleAvatar(radius: 3.5, backgroundColor: Colors.white),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'TRANSMISIÓN EN VIVO',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // Quick Play Overlay Button (Corner, translucent)
+                              Positioned(
+                                bottom: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: activeTheme.primaryColor.withValues(alpha: 0.85),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    isCurrentPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                    size: 26,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
 
                         // Channel info bar
