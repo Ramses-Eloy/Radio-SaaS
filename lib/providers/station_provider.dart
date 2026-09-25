@@ -90,6 +90,7 @@ class StationProvider extends ChangeNotifier {
   StreamSubscription<List<Station>>? _emisorasSub;
   StreamSubscription<List<TvChannel>>? _tvSub;
   StreamSubscription<List<Program>>? _programacionSub;
+  String? _programacionTargetId;
 
   StationProvider() {
     _loadThemePreference();
@@ -143,10 +144,9 @@ class StationProvider extends ChangeNotifier {
     _emisorasSub?.cancel();
     _tvSub?.cancel();
     _programacionSub?.cancel();
+    _programacionSub = null;
 
     try {
-      _firestoreService.ensureInitialDataSeeded(_activeAppId);
-
       // Stream `marcas/{_activeAppId}`
       _marcaSub = _firestoreService.streamMarca(_activeAppId).listen((data) async {
         if (data != null) {
@@ -385,21 +385,23 @@ class StationProvider extends ChangeNotifier {
     }
   }
 
+  // One listener on programacion/{stationId}; only re-subscribes when the
+  // selected station changes, so emisoras/marca updates cost no extra reads.
   Future<void> _updateProgramacionSubscription() async {
+    if (_stations.isEmpty || _selectedStationIndex >= _stations.length) return;
+    final currentId = _stations[_selectedStationIndex].id;
+    if (_programacionSub != null && _programacionTargetId == currentId) return;
+
     _programacionSub?.cancel();
-    if (_stations.isNotEmpty && _selectedStationIndex < _stations.length) {
-      final currentId = _stations[_selectedStationIndex].id;
-      final stream = _firestoreService.streamProgramacion(currentId);
-      try {
-        _programs = await stream.first;
-      } catch (_) {
-        _programs = [];
-      }
-      _programacionSub = stream.listen((list) {
+    _programacionTargetId = currentId;
+    _programs = [];
+    _programacionSub = _firestoreService.streamProgramacion(currentId).listen(
+      (list) {
         _programs = list;
         notifyListeners();
-      });
-    }
+      },
+      onError: (_) => _programs = [],
+    );
   }
 
   Future<void> updateStationDetails({
