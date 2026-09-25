@@ -11,6 +11,17 @@ la **app de oyentes** (Android/iOS) y el **dashboard web** (admins de emisora y 
 - Cada app móvil lee **solo los datos de su `appId`**. Nunca cargues datos de todas las marcas al arrancar.
 - Todo cambio debe funcionar para **N emisoras**: nada de `if (appId == 'sira')` nuevos; la configuración vive en Firestore.
 
+## Agentes (`.claude/agents/`)
+
+Migrados de `.clinerules` (antes con Gemini). Flujo sugerido para pedidos grandes: `product-owner` → `arquitecto` → `desarrollador` → `tester`.
+
+| Agente | Modelo | Rol |
+|---|---|---|
+| `product-owner` | opus | Estructura el pedido en tareas priorizadas. No escribe código. |
+| `arquitecto` | opus | Diseña el cambio (archivos, Firestore, reglas). No escribe código. |
+| `desarrollador` | sonnet | Implementa. |
+| `tester` | sonnet | Corre análisis/pruebas y busca fallos de aislamiento entre marcas. |
+
 ## Modelo de negocio (multi-tenant)
 
 - **Marca / tenant** = un cliente, identificado por `appId` (p. ej. `erancon`, `sira`). Documento `marcas/{appId}` con `ownerEmail`, branding, `features` y `alerta_global`.

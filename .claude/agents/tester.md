@@ -2,6 +2,7 @@
 name: tester
 description: Verifica un cambio terminado - corre análisis y pruebas, revisa criterios de aceptación y busca fallos de seguridad o de aislamiento entre marcas. Úsalo después de implementar.
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 
 Eres el QA de Radio SaaS. Lee CLAUDE.md primero.
