@@ -15,6 +15,9 @@ class AppInfo {
     required this.bannerHomeUrl,
     required this.splashEnabled,
     required this.splashDurationSec,
+    required this.shareText,
+    required this.playStoreUrl,
+    required this.appStoreUrl,
   });
 
   final String id;
@@ -28,6 +31,9 @@ class AppInfo {
   final String bannerHomeUrl;
   final bool splashEnabled;
   final int splashDurationSec;
+  final String shareText;
+  final String playStoreUrl;
+  final String appStoreUrl;
 
   factory AppInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -47,6 +53,9 @@ class AppInfo {
         min: 1,
         max: 5,
       ),
+      shareText: d[EmisoraFields.shareText] as String? ?? 'Descarga nuestra app y escucha en vivo',
+      playStoreUrl: d[EmisoraFields.playStoreUrl] as String? ?? '',
+      appStoreUrl: d[EmisoraFields.appStoreUrl] as String? ?? '',
     );
   }
 
@@ -62,6 +71,9 @@ class AppInfo {
         'bannerHomeUrl': bannerHomeUrl,
         'splashEnabled': splashEnabled,
         'splashDurationSec': splashDurationSec,
+        'shareText': shareText,
+        'playStoreUrl': playStoreUrl,
+        'appStoreUrl': appStoreUrl,
       };
 
   factory AppInfo.fromJson(Map<String, dynamic> json) {
@@ -77,6 +89,9 @@ class AppInfo {
       bannerHomeUrl: json['bannerHomeUrl'] as String? ?? '',
       splashEnabled: json['splashEnabled'] as bool? ?? false,
       splashDurationSec: (json['splashDurationSec'] as num?)?.toInt() ?? 3,
+      shareText: json['shareText'] as String? ?? 'Descarga nuestra app y escucha en vivo',
+      playStoreUrl: json['playStoreUrl'] as String? ?? '',
+      appStoreUrl: json['appStoreUrl'] as String? ?? '',
     );
   }
 
@@ -92,6 +107,9 @@ class AppInfo {
     String? bannerHomeUrl,
     bool? splashEnabled,
     int? splashDurationSec,
+    String? shareText,
+    String? playStoreUrl,
+    String? appStoreUrl,
   }) {
     return AppInfo(
       id: id ?? this.id,
@@ -105,6 +123,9 @@ class AppInfo {
       bannerHomeUrl: bannerHomeUrl ?? this.bannerHomeUrl,
       splashEnabled: splashEnabled ?? this.splashEnabled,
       splashDurationSec: splashDurationSec ?? this.splashDurationSec,
+      shareText: shareText ?? this.shareText,
+      playStoreUrl: playStoreUrl ?? this.playStoreUrl,
+      appStoreUrl: appStoreUrl ?? this.appStoreUrl,
     );
   }
 }

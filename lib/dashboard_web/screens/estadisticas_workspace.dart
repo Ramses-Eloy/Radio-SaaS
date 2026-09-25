@@ -620,8 +620,15 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
     final isSel = _targetId == t.id;
     final isGlobal = t.id == 'GLOBAL_ALL';
     
-    // Mock values
-    final listeners = '0';
+    int totalPlays = 0;
+    if (_stats != null) {
+      if (isGlobal) {
+        totalPlays = _stats!.totalPlays;
+      } else {
+        totalPlays = _stats!.stationTotals[t.id]?['plays'] ?? 0;
+      }
+    }
+    final listeners = _formatNumber(totalPlays);
     final baseColor = isGlobal ? scheme.primary : (t.entity is Emisora ? (ColorHex.tryParse((t.entity as Emisora).colorHex) ?? scheme.tertiary) : scheme.secondary);
 
     return InkWell(

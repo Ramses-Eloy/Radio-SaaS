@@ -36,14 +36,12 @@ class FirestoreService {
 
   // Real-time Stream for Emisoras (`emisoras` collection)
   Stream<List<Station>> streamEmisoras(String appId) {
-    return _db.collection('emisoras').snapshots().map((snapshot) {
-      final matchingDocs = snapshot.docs.where((doc) {
-        final data = doc.data();
-        final itemAppId = data['appId']?.toString().toLowerCase();
-        return itemAppId == appId.toLowerCase() || doc.id.toLowerCase().startsWith('${appId.toLowerCase()}_');
-      }).toList();
-
-      return matchingDocs.map((doc) {
+    return _db
+        .collection('emisoras')
+        .where('appId', isEqualTo: appId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
         final data = doc.data();
         return Station(
           id: doc.id,
@@ -81,14 +79,12 @@ class FirestoreService {
 
   // Real-time Stream for TV Channels (`streamings` collection)
   Stream<List<TvChannel>> streamTvChannels(String appId) {
-    return _db.collection('streamings').snapshots().map((snapshot) {
-      final matchingDocs = snapshot.docs.where((doc) {
-        final data = doc.data();
-        final itemAppId = data['appId']?.toString().toLowerCase();
-        return itemAppId == appId.toLowerCase() || doc.id.toLowerCase().startsWith('${appId.toLowerCase()}_');
-      }).toList();
-
-      return matchingDocs.map((doc) {
+    return _db
+        .collection('streamings')
+        .where('appId', isEqualTo: appId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
         final data = doc.data();
         return TvChannel(
           id: doc.id,

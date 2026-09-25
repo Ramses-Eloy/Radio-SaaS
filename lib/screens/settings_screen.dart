@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
 
@@ -13,7 +14,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
   int _selectedTimerMinutes = 0; // 0 = Off
   Timer? _sleepTimer;
 
@@ -55,10 +55,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _shareApp() async {
-    final url = Uri.parse('https://wa.me/?text= Escucha%20las%20mejores%20estaciones%20y%20TV%20en%20vivo%20en%20nuestra%20App!');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    final stationProvider = context.read<StationProvider>();
+    final shareText = stationProvider.shareText;
+    final playStoreUrl = stationProvider.playStoreUrl;
+    final appStoreUrl = stationProvider.appStoreUrl;
+
+    String url = '';
+    if (Platform.isAndroid && playStoreUrl.isNotEmpty) {
+      url = playStoreUrl;
+    } else if (Platform.isIOS && appStoreUrl.isNotEmpty) {
+      url = appStoreUrl;
     }
+
+    final message = url.isNotEmpty ? '$shareText\n$url' : shareText;
+    
+    await SharePlus.instance.share(ShareParams(text: message));
   }
 
   @override
@@ -104,11 +115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     secondary: Icon(Icons.notifications_active, color: activeTheme.primaryColor),
                     title: const Text('Notificaciones en Vivo', style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: const Text('Recibe alertas cuando tus programas favoritos estén al aire'),
-                    value: _notificationsEnabled,
+                    value: stationProvider.notificationsEnabled,
                     onChanged: (val) {
-                      setState(() {
-                        _notificationsEnabled = val;
-                      });
+                      stationProvider.toggleNotifications(val);
                     },
                   ),
                   const Divider(height: 1),

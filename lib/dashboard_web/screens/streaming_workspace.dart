@@ -38,11 +38,14 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
   final _logoCarrusel = TextEditingController();
   final _hex = TextEditingController();
   final _hexSecundario = TextEditingController();
+  final _youtubeChannelId = TextEditingController();
 
   bool _saving = false;
   bool _uploadingLogo = false;
   bool _uploadingLogoCarrusel = false;
   bool _mostrarEnCarrusel = false;
+  bool _youtubeAutoSync = false;
+  String _youtubeSyncType = 'principal';
 
   final BrandStorageService _brandStorage = BrandStorageService();
 
@@ -69,6 +72,9 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     _hex.text = ColorHex.normalize(s.colorHex);
     _hexSecundario.text = ColorHex.normalize(s.colorSecundarioHex);
     _mostrarEnCarrusel = s.mostrarEnCarrusel;
+    _youtubeChannelId.text = s.youtubeChannelId;
+    _youtubeAutoSync = s.youtubeAutoSync;
+    _youtubeSyncType = s.youtubeSyncType;
   }
 
   @override
@@ -79,6 +85,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
     _logoCarrusel.dispose();
     _hex.dispose();
     _hexSecundario.dispose();
+    _youtubeChannelId.dispose();
     super.dispose();
   }
 
@@ -233,6 +240,9 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
         EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
         EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
         EmisoraFields.mostrarEnCarrusel: _mostrarEnCarrusel,
+        EmisoraFields.youtubeAutoSync: _youtubeAutoSync,
+        EmisoraFields.youtubeChannelId: _youtubeChannelId.text.trim(),
+        EmisoraFields.youtubeSyncType: _youtubeSyncType,
       };
       await widget.repository.updateStreamingFields(
         widget.streaming.id,
@@ -248,6 +258,9 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
           colorHex: payload[EmisoraFields.colorHex] as String,
           colorSecundarioHex: payload[EmisoraFields.colorSecundarioHex] as String,
           mostrarEnCarrusel: _mostrarEnCarrusel,
+          youtubeAutoSync: _youtubeAutoSync,
+          youtubeChannelId: payload[EmisoraFields.youtubeChannelId] as String,
+          youtubeSyncType: payload[EmisoraFields.youtubeSyncType] as String,
         ),
       );
       if (!mounted) return;
@@ -367,11 +380,15 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _urlVideo,
-                  decoration: const InputDecoration(
+                  enabled: !_youtubeAutoSync,
+                  decoration: InputDecoration(
                     labelText: 'URL del stream',
-                    helperText: 'Enlace de video (HLS .m3u8, MP4, YouTube, etc.).',
+                    helperText: _youtubeAutoSync
+                        ? 'Bloqueado por Auto-Sincronización de YouTube. Desactívala abajo para editar manualmente.'
+                        : 'Enlace de video (HLS .m3u8, MP4, YouTube, etc.).',
+                    helperMaxLines: 2,
                     hintText: 'https://…/playlist.m3u8',
-                    prefixIcon: Icon(Icons.videocam_outlined),
+                    prefixIcon: const Icon(Icons.videocam_outlined),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -420,6 +437,69 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
                     previewHeight: 64,
                   ),
                 ],
+                const SizedBox(height: 24),
+                // ── Sincronización Automática con YouTube ──────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        secondary: Icon(Icons.video_camera_front, color: scheme.primary),
+                        title: Text(
+                          'Activar Auto-Sincronización de YouTube',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          'Si lo activas, el sistema revisará cada 5 minutos el canal de YouTube y actualizará automáticamente la URL del video.',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                        value: _youtubeAutoSync,
+                        onChanged: (val) => setState(() => _youtubeAutoSync = val),
+                      ),
+                      if (_youtubeAutoSync)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Divider(),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _youtubeChannelId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Enlace del Canal, Usuario (@) o ID',
+                                  helperText: 'Pega tu usuario (ej. @MiCanal), el enlace de YouTube o el ID (UC...).',
+                                  hintText: 'https://youtube.com/@MiCanal',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                initialValue: _youtubeSyncType,
+                                decoration: const InputDecoration(
+                                  labelText: '¿Qué transmisión utilizar?',
+                                  helperText: 'Principal usa el último video en vivo. Retransmisión usa el penúltimo.',
+                                ),
+                                items: const [
+                                  DropdownMenuItem(value: 'principal', child: Text('Principal (Última transmisión)')),
+                                  DropdownMenuItem(value: 'retransmision', child: Text('Retransmisión (Penúltima transmisión)')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() => _youtubeSyncType = val);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Imagen del canal',

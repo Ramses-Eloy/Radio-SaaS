@@ -231,6 +231,7 @@ class EmisoraRepository {
     required String bannerHomeUrl,
     required bool splashEnabled,
     required int splashDurationSec,
+    String? shareText,
   }) {
     final advertising = FirestoreTypedValue.brandAdvertisingFields(
       splashUrl: splashUrl,
@@ -251,6 +252,7 @@ class EmisoraRepository {
         EmisoraFields.logoUrl: logoUrl,
         EmisoraFields.colorHex: colorHex,
         EmisoraFields.logoUrlUpdatedAt: FieldValue.serverTimestamp(),
+        EmisoraFields.shareText: ?shareText,
         ...advertising,
       },
     );

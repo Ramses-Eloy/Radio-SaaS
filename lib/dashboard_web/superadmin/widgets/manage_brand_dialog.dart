@@ -26,6 +26,8 @@ class _ManageBrandDialogState extends State<ManageBrandDialog> with SingleTicker
   late final TextEditingController _nombreController;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  late final TextEditingController _playStoreUrlController;
+  late final TextEditingController _appStoreUrlController;
   late bool _active;
   bool _savingGeneral = false;
   bool _sendingReset = false;
@@ -53,6 +55,8 @@ class _ManageBrandDialogState extends State<ManageBrandDialog> with SingleTicker
     _nombreController = TextEditingController(text: widget.marca.nombreGrupo);
     _emailController = TextEditingController(text: widget.marca.ownerEmail);
     _passwordController = TextEditingController();
+    _playStoreUrlController = TextEditingController(text: widget.marca.playStoreUrl);
+    _appStoreUrlController = TextEditingController(text: widget.marca.appStoreUrl);
     _active = widget.marca.active;
 
     // Init Módulos
@@ -73,6 +77,8 @@ class _ManageBrandDialogState extends State<ManageBrandDialog> with SingleTicker
     _nombreController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _playStoreUrlController.dispose();
+    _appStoreUrlController.dispose();
     _emisorasSub?.cancel();
     _streamingsSub?.cancel();
     super.dispose();
@@ -92,6 +98,11 @@ class _ManageBrandDialogState extends State<ManageBrandDialog> with SingleTicker
         newOwnerEmail: _emailController.text.trim() != widget.marca.ownerEmail ? _emailController.text.trim() : null,
         newPassword: _passwordController.text.trim().isNotEmpty ? _passwordController.text.trim() : null,
         active: _active,
+      );
+      await widget.repository.updateMarcaStoreLinks(
+        appId: widget.marca.appId,
+        playStoreUrl: _playStoreUrlController.text.trim(),
+        appStoreUrl: _appStoreUrlController.text.trim(),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos generales actualizados')));
@@ -272,6 +283,24 @@ class _ManageBrandDialogState extends State<ManageBrandDialog> with SingleTicker
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _playStoreUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Play Store URL (Android)',
+                border: OutlineInputBorder(),
+                hintText: 'Ej. https://play.google.com/store/apps/details?id=com.ejemplo.radio',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _appStoreUrlController,
+              decoration: const InputDecoration(
+                labelText: 'App Store URL (iOS)',
+                border: OutlineInputBorder(),
+                hintText: 'Ej. https://apps.apple.com/app/ejemplo/id123456789',
+              ),
             ),
             const SizedBox(height: 16),
             SwitchListTile(

@@ -135,9 +135,19 @@ class SuperAdminRepository {
       batch.set(_db.collection('marcas').doc(appId), updates, SetOptions(merge: true));
     }
 
-
-
     await batch.commit();
+  }
+
+  /// Actualiza los enlaces de las tiendas de aplicaciones para la marca.
+  Future<void> updateMarcaStoreLinks({
+    required String appId,
+    required String playStoreUrl,
+    required String appStoreUrl,
+  }) async {
+    await _db.collection('marcas').doc(appId).set({
+      'play_store_url': playStoreUrl,
+      'app_store_url': appStoreUrl,
+    }, SetOptions(merge: true));
   }
 
   /// Actualiza la contraseña de un usuario por su email.
@@ -317,6 +327,8 @@ class MarcaRecord {
   final AppFeatures features;
   final bool active;
   final DateTime? createdAt;
+  final String playStoreUrl;
+  final String appStoreUrl;
 
   const MarcaRecord({
     required this.appId,
@@ -327,6 +339,8 @@ class MarcaRecord {
     required this.features,
     required this.active,
     this.createdAt,
+    required this.playStoreUrl,
+    required this.appStoreUrl,
   });
 
   /// Determina el nombre del plan basándose en las features activas.
@@ -354,6 +368,8 @@ class MarcaRecord {
       features: AppFeatures.fromMap(data),
       active: data['active'] as bool? ?? true,
       createdAt: created,
+      playStoreUrl: data['play_store_url'] as String? ?? '',
+      appStoreUrl: data['app_store_url'] as String? ?? '',
     );
   }
 }

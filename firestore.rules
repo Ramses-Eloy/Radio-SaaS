@@ -1,6 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow unauthenticated telemetry writes
+    match /stats_daily/{document} {
+      allow read: if request.auth != null; // Dashboard reads it
+      allow write: if true; // Public radio apps write to it
+    }
+
     match /{document=**} {
       allow read: if true;
       allow write: if request.auth != null;

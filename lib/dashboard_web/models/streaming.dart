@@ -15,6 +15,9 @@ class Streaming {
     this.statsUpdatedAt,
     this.mostrarEnCarrusel = false,
     this.logoCarrusel = '',
+    this.youtubeAutoSync = false,
+    this.youtubeChannelId = '',
+    this.youtubeSyncType = 'principal',
   });
 
   final String id;
@@ -27,6 +30,9 @@ class Streaming {
   final DateTime? statsUpdatedAt;
   final bool mostrarEnCarrusel;
   final String logoCarrusel;
+  final bool youtubeAutoSync;
+  final String youtubeChannelId;
+  final String youtubeSyncType;
 
   factory Streaming.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -45,6 +51,9 @@ class Streaming {
       statsUpdatedAt: ts?.toDate(),
       mostrarEnCarrusel: d[EmisoraFields.mostrarEnCarrusel] as bool? ?? false,
       logoCarrusel: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.logoCarrusel]),
+      youtubeAutoSync: FirestoreTypedValue.toFirestoreBool(d[EmisoraFields.youtubeAutoSync]),
+      youtubeChannelId: FirestoreTypedValue.toFirestoreString(d[EmisoraFields.youtubeChannelId]),
+      youtubeSyncType: d[EmisoraFields.youtubeSyncType] as String? ?? 'principal',
     );
   }
 
@@ -59,6 +68,9 @@ class Streaming {
         'statsUpdatedAt': statsUpdatedAt?.toIso8601String(),
         'mostrarEnCarrusel': mostrarEnCarrusel,
         'logoCarrusel': logoCarrusel,
+        'youtubeAutoSync': youtubeAutoSync,
+        'youtubeChannelId': youtubeChannelId,
+        'youtubeSyncType': youtubeSyncType,
       };
 
   factory Streaming.fromJson(Map<String, dynamic> json) {
@@ -73,6 +85,9 @@ class Streaming {
       statsUpdatedAt: json['statsUpdatedAt'] != null ? DateTime.tryParse(json['statsUpdatedAt'] as String) : null,
       mostrarEnCarrusel: json['mostrarEnCarrusel'] as bool? ?? false,
       logoCarrusel: json['logoCarrusel'] as String? ?? '',
+      youtubeAutoSync: json['youtubeAutoSync'] as bool? ?? false,
+      youtubeChannelId: json['youtubeChannelId'] as String? ?? '',
+      youtubeSyncType: json['youtubeSyncType'] as String? ?? 'principal',
     );
   }
 
@@ -87,6 +102,9 @@ class Streaming {
     DateTime? statsUpdatedAt,
     bool? mostrarEnCarrusel,
     String? logoCarrusel,
+    bool? youtubeAutoSync,
+    String? youtubeChannelId,
+    String? youtubeSyncType,
   }) {
     return Streaming(
       id: id ?? this.id,
@@ -99,6 +117,9 @@ class Streaming {
       statsUpdatedAt: statsUpdatedAt ?? this.statsUpdatedAt,
       mostrarEnCarrusel: mostrarEnCarrusel ?? this.mostrarEnCarrusel,
       logoCarrusel: logoCarrusel ?? this.logoCarrusel,
+      youtubeAutoSync: youtubeAutoSync ?? this.youtubeAutoSync,
+      youtubeChannelId: youtubeChannelId ?? this.youtubeChannelId,
+      youtubeSyncType: youtubeSyncType ?? this.youtubeSyncType,
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Mobile-only providers & screens
 import 'providers/station_provider.dart';
@@ -24,6 +25,7 @@ import 'widgets/persistent_bottom_banner.dart';
 import 'widgets/floating_pip_overlay.dart';
 import 'services/telemetry_service.dart';
 import 'widgets/station_switcher.dart';
+import 'widgets/avance_informativo_dialog.dart';
 
 // Web dashboard
 import 'admin/admin_dashboard_screen.dart';
@@ -112,6 +114,23 @@ void main() async {
       },
     );
     return;
+  }
+
+  // Mobile path: Request FCM permissions
+  try {
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: false, // Don't show system popup in foreground, we use our own dialog
+      badge: false,
+      sound: false,
+    );
+  } catch (e) {
+    if (kDebugMode) print('Firebase Messaging init error: $e');
   }
 
   // Mobile path
@@ -238,6 +257,7 @@ class MainNavigationFrame extends StatefulWidget {
 class _MainNavigationFrameState extends State<MainNavigationFrame>
     with MainNavigatorMixin<MainNavigationFrame> {
   int _currentIndex = 0;
+  bool _alertDialogShowing = false;
 
   @override
   void initState() {
@@ -247,11 +267,59 @@ class _MainNavigationFrameState extends State<MainNavigationFrame>
       
       // Initialize telemetry batching with current appId
       TelemetryService().initialize(appId: stationProvider.activeAppId);
+
+      // Listen for new Avance Informativo in real-time
+      stationProvider.addListener(_handleAlertUpdate);
+      _handleAlertUpdate(); // Check immediately on mount
+    });
+  }
+
+  void _handleAlertUpdate() {
+    if (!mounted || _alertDialogShowing) return;
+    final stationProvider = context.read<StationProvider>();
+    if (stationProvider.isSplashShowing) return;
+    
+    final msg = stationProvider.flashInformativoMessage;
+    if (msg != null && msg.isNotEmpty) {
+      _showAvanceInformativo(msg);
+    }
+  }
+
+  void _showAvanceInformativo(String msg) {
+    if (!mounted || _alertDialogShowing) return;
+    _alertDialogShowing = true;
+    final stationProvider = context.read<StationProvider>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AvanceInformativoDialog(
+        message: msg,
+        onDismiss: () {
+          // Log as ad_click (avance informativo acknowledgement)
+          TelemetryService().logEvent(
+            eventType: 'ad_click',
+            stationId: stationProvider.currentStation.id,
+            metadata: {
+              'adType': 'avance_informativo',
+              'action': 'entendido',
+            },
+          );
+          stationProvider.clearFlashInformativo();
+          Navigator.of(ctx).pop();
+        },
+      ),
+    ).whenComplete(() {
+      _alertDialogShowing = false;
     });
   }
 
   @override
   void dispose() {
+    // Stop listening for Avance Informativo
+    if (mounted) {
+      context.read<StationProvider>().removeListener(_handleAlertUpdate);
+    }
     // Flush any pending telemetry data before the app closes
     TelemetryService().flushAndDispose();
     super.dispose();

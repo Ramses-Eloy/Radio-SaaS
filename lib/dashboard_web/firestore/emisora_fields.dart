@@ -48,6 +48,13 @@ abstract final class EmisoraFields {
   static const String tvLabel = 'tv_label';
   static const String scheduleLabel = 'schedule_label';
   static const String youtubeUrl = 'youtube_url';
+  static const String youtubeChannelId = 'youtube_channel_id';
+  static const String youtubeAutoSync = 'youtube_auto_sync';
+  static const String youtubeSyncType = 'youtube_sync_type';
+
+  static const String shareText = 'share_text';
+  static const String playStoreUrl = 'play_store_url';
+  static const String appStoreUrl = 'app_store_url';
 
   static const String splashUrl = 'splash_url';
   /// Clave en `marcas/{appId}` que lee la app móvil para el banner del Home. Valor `''` oculta el banner.

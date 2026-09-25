@@ -1,7 +1,11 @@
 import 'dart:async';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import '../models/telemetry_event.dart';
 
 /// Telemetry service that buffers events locally and flushes them to Firestore
@@ -10,7 +14,7 @@ import '../models/telemetry_event.dart';
 ///
 /// Instead of writing N events per second, the app accumulates counters in
 /// memory and writes a single aggregated document per flush cycle.
-class TelemetryService {
+class TelemetryService with WidgetsBindingObserver {
   static final TelemetryService _instance = TelemetryService._internal();
   factory TelemetryService() => _instance;
   TelemetryService._internal();
@@ -46,6 +50,7 @@ class TelemetryService {
     _activeAppId = appId;
     if (_initialized) return;
     _initialized = true;
+    WidgetsBinding.instance.addObserver(this);
 
     // Resolve geo once
     _resolveGeo();
@@ -71,16 +76,29 @@ class TelemetryService {
     }
   }
 
-  /// Resolves the user's country code once per session using the device locale.
-  void _resolveGeo() {
+  /// Resolves the user's country code once per session using an IP geolocation service.
+  Future<void> _resolveGeo() async {
     if (_geoResolved) return;
     _geoResolved = true;
     try {
-      // Use the device's locale country code (no network call, free, instant)
-      final locale = PlatformDispatcher.instance.locale;
-      _sessionCountryCode = locale.countryCode ?? 'XX';
+      // Use ip-api.com to get the actual physical country based on IP
+      final response = await http.get(Uri.parse('http://ip-api.com/json/')).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _sessionCountryCode = data['countryCode'] ?? 'XX';
+      } else {
+        // Fallback to locale if the network request fails
+        final locale = PlatformDispatcher.instance.locale;
+        _sessionCountryCode = locale.countryCode ?? 'XX';
+      }
     } catch (_) {
-      _sessionCountryCode = 'XX';
+      // Fallback to locale if there is a network error (e.g., no internet connection)
+      try {
+        final locale = PlatformDispatcher.instance.locale;
+        _sessionCountryCode = locale.countryCode ?? 'XX';
+      } catch (_) {
+        _sessionCountryCode = 'XX';
+      }
     }
     if (kDebugMode) {
       print('📊 [TELEMETRÍA] País de sesión detectado: $_sessionCountryCode');
@@ -161,7 +179,7 @@ class TelemetryService {
       final db = FirebaseFirestore.instance;
       final docRef = db.collection('stats_daily').doc(docId);
 
-      // Build the atomic increment map
+      // Build the atomic increment map using nested Maps for merge: true
       final Map<String, dynamic> updateData = {
         'appId': _activeAppId,
         'date': dateKey,
@@ -172,18 +190,30 @@ class TelemetryService {
         'totalAlertAcks': FieldValue.increment(alertAcks),
         'totalSocialClicks': FieldValue.increment(socialClicks),
         // Hourly breakdown
-        'hourly.$hourKey.plays': FieldValue.increment(plays),
-        'hourly.$hourKey.adClicks': FieldValue.increment(adClicks),
+        'hourly': {
+          hourKey: {
+            'plays': FieldValue.increment(plays),
+            'adClicks': FieldValue.increment(adClicks),
+          }
+        },
         // Geo breakdown
-        'geo.$country': FieldValue.increment(plays),
+        'geo': {
+          country: FieldValue.increment(plays),
+        },
+        'stations': <String, dynamic>{},
       };
 
       // Per-station breakdown
       for (final entry in playsByStation.entries) {
-        updateData['stations.${entry.key}.plays'] = FieldValue.increment(entry.value);
+        updateData['stations'][entry.key] = {
+          'plays': FieldValue.increment(entry.value),
+        };
       }
       for (final entry in adClicksByStation.entries) {
-        updateData['stations.${entry.key}.adClicks'] = FieldValue.increment(entry.value);
+        if (updateData['stations'][entry.key] == null) {
+          updateData['stations'][entry.key] = <String, dynamic>{};
+        }
+        updateData['stations'][entry.key]['adClicks'] = FieldValue.increment(entry.value);
       }
 
       await docRef.set(updateData, SetOptions(merge: true));
@@ -240,5 +270,16 @@ class TelemetryService {
   void dispose() {
     _flushTimer?.cancel();
     _flushTimer = null;
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      if (kDebugMode) {
+        print('📊 [TELEMETRÍA] Lifecycle state changed to $state. Flushing pending stats...');
+      }
+      flush();
+    }
   }
 }

@@ -8,6 +8,7 @@ import '../models/station.dart';
 import '../models/program.dart';
 import '../models/tv_channel.dart';
 import '../services/firestore_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class StationProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -21,6 +22,9 @@ class StationProvider extends ChangeNotifier {
 
   bool _isLoading = true;
   bool get isLoading => _isLoading;
+
+  bool _notificationsEnabled = true;
+  bool get notificationsEnabled => _notificationsEnabled;
 
   // General App Brand Settings (Mapped to Firestore `marcas` doc)
   String _brandName = 'ERANCÓN';
@@ -36,6 +40,10 @@ class StationProvider extends ChangeNotifier {
   bool _isSplashShowing = false;
   String _scheduleLabel = 'Programación';
 
+  String _shareText = 'Descarga nuestra app y escucha en vivo';
+  String _playStoreUrl = '';
+  String _appStoreUrl = '';
+
   String get brandName => _brandName;
   String get brandEmail => _brandEmail;
   String get brandLogoUrl => _brandLogoUrl;
@@ -48,6 +56,10 @@ class StationProvider extends ChangeNotifier {
   int get splashDurationSec => _splashDurationSec;
   String? get flashInformativoMessage => _flashInformativoMessage;
   bool get isSplashShowing => _isSplashShowing;
+
+  String get shareText => _shareText;
+  String get playStoreUrl => _playStoreUrl;
+  String get appStoreUrl => _appStoreUrl;
 
   void setSplashShowing(bool value) {
     if (_isSplashShowing != value) {
@@ -95,6 +107,10 @@ class StationProvider extends ChangeNotifier {
           orElse: () => ThemeMode.system,
         );
       }
+      
+      // Load notifications enabled state (default true)
+      _notificationsEnabled = prefs.getBool('notifications_enabled_$_activeAppId') ?? true;
+      
       notifyListeners();
     } catch (_) {
       // Si falla el storage local, se mantiene el modo por defecto.
@@ -146,6 +162,9 @@ class StationProvider extends ChangeNotifier {
           _splashDurationSec = (data['splash_duration_sec'] ?? _splashDurationSec) is int
               ? data['splash_duration_sec'] ?? _splashDurationSec
               : _splashDurationSec;
+          _shareText = data['share_text'] ?? _shareText;
+          _playStoreUrl = data['play_store_url'] ?? _playStoreUrl;
+          _appStoreUrl = data['app_store_url'] ?? _appStoreUrl;
 
           // Cache splash settings for instantaneous load on next app launch
           try {
@@ -243,6 +262,14 @@ class StationProvider extends ChangeNotifier {
     _currentAlertId = null;
     _flashInformativoMessage = null;
 
+    try {
+      if (_notificationsEnabled) {
+        FirebaseMessaging.instance.subscribeToTopic('brand_$appId');
+      } else {
+        FirebaseMessaging.instance.unsubscribeFromTopic('brand_$appId');
+      }
+    } catch (_) {}
+
     if (appId == 'sira') {
       _brandName = 'Grupo Sira Radio';
       _brandEmail = 'isaacsarsanedas@gmail.com';
@@ -331,6 +358,23 @@ class StationProvider extends ChangeNotifier {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     _persistThemePreference();
     notifyListeners();
+  }
+
+  Future<void> toggleNotifications(bool value) async {
+    if (_notificationsEnabled == value) return;
+    _notificationsEnabled = value;
+    notifyListeners();
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notifications_enabled_$_activeAppId', value);
+      
+      if (value) {
+        await FirebaseMessaging.instance.subscribeToTopic('brand_$_activeAppId');
+      } else {
+        await FirebaseMessaging.instance.unsubscribeFromTopic('brand_$_activeAppId');
+      }
+    } catch (_) {}
   }
 
   Future<void> selectStation(int index) async {

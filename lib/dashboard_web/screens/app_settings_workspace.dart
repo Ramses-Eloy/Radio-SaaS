@@ -40,6 +40,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
   final _bannerHomeUrl = TextEditingController();
   final _splashDuration = TextEditingController();
   final _flashInformativo = TextEditingController();
+  final _shareTextController = TextEditingController();
 
   bool _saving = false;
   bool _uploadingLogo = false;
@@ -82,6 +83,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _logoUrl.text = i.logoUrl;
     _splashUrl.text = i.splashUrl;
     _bannerHomeUrl.text = i.bannerHomeUrl;
+    _shareTextController.text = i.shareText;
     _splashEnabled = FirestoreTypedValue.toFirestoreBool(i.splashEnabled);
     _splashDuration.text = '${FirestoreTypedValue.toFirestoreInt(i.splashDurationSec, min: 1, max: 5)}';
   }
@@ -97,6 +99,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _bannerHomeUrl.dispose();
     _splashDuration.dispose();
     _flashInformativo.dispose();
+    _shareTextController.dispose();
     super.dispose();
   }
 
@@ -228,6 +231,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
         bannerHomeUrl: bannerHomeUrl,
         splashEnabled: splashEnabled,
         splashDurationSec: splashDurationSec,
+        shareText: _shareTextController.text.trim(),
       );
       if (!mounted) return;
       widget.dataStore.patchAppInfo(
@@ -242,6 +246,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
           bannerHomeUrl: bannerHomeUrl,
           splashEnabled: splashEnabled,
           splashDurationSec: splashDurationSec,
+          shareText: _shareTextController.text.trim(),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ajustes guardados.')));
@@ -384,6 +389,17 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                     helperText: 'Se muestra en el encabezado del panel web y en la pantalla de Ajustes de la app móvil.',
                     hintText: 'Ej. Grupo SIRA',
                   ),
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _shareTextController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mensaje para Compartir App',
+                    hintText: 'Ej. ¡Escucha nuestra radio! Descarga la app aquí:',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.share),
+                  ),
+                  maxLength: 150,
                 ),
                 const SizedBox(height: 24),
                 Text(

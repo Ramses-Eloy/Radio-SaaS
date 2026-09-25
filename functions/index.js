@@ -2,6 +2,7 @@ const functions = require('firebase-functions/v1');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 // Inicializar la aplicación de Firebase Admin
 initializeApp();
@@ -306,3 +307,231 @@ exports.createStreamingChannel = functions.https.onCall(async (data, context) =>
 
     return { success: true, docId: docRef.id };
 });
+
+/**
+ * Fetches the latest stream video IDs from a YouTube channel's /streams page.
+ * Works with both UC... channel IDs and @handle usernames.
+ * Parses the structured ytInitialData JSON to extract only the channel's own
+ * stream videos (not recommended/ad videos).
+ * Returns an array of video URLs in chronological order (most recent first).
+ */
+async function fetchYouTubeStreamVideoUrls(channelIdentifier) {
+    // Build the URL: if it starts with UC it's a channel ID, otherwise treat as handle
+    let pageUrl;
+    if (channelIdentifier.startsWith('UC') && channelIdentifier.length === 24) {
+        pageUrl = `https://www.youtube.com/channel/${channelIdentifier}/streams`;
+    } else if (channelIdentifier.startsWith('@')) {
+        pageUrl = `https://www.youtube.com/${channelIdentifier}/streams`;
+    } else {
+        pageUrl = `https://www.youtube.com/@${channelIdentifier}/streams`;
+    }
+
+    const response = await fetch(pageUrl, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
+        }
+    });
+    const html = await response.text();
+
+    // Parse the structured ytInitialData JSON embedded in the page
+    const jsonMatch = html.match(/var ytInitialData = ({.*?});/);
+    if (jsonMatch) {
+        try {
+            const data = JSON.parse(jsonMatch[1]);
+            const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
+            
+            for (const tab of tabs) {
+                const tabRenderer = tab?.tabRenderer;
+                if (tabRenderer?.selected) {
+                    const items = tabRenderer?.content?.richGridRenderer?.contents || [];
+                    const videoUrls = [];
+                    
+                    for (const item of items) {
+                        // YouTube uses lockupViewModel for stream items
+                        const contentId = item?.richItemRenderer?.content?.lockupViewModel?.contentId;
+                        if (contentId) {
+                            videoUrls.push(`https://www.youtube.com/watch?v=${contentId}`);
+                        }
+                    }
+                    
+                    if (videoUrls.length > 0) {
+                        console.log(`Parsed ${videoUrls.length} stream videos from ytInitialData for ${channelIdentifier}`);
+                        return videoUrls;
+                    }
+                }
+            }
+        } catch (parseError) {
+            console.error(`Error parsing ytInitialData JSON:`, parseError);
+        }
+    }
+
+    // Fallback: use regex but try to be more targeted
+    console.log(`Falling back to regex extraction for ${channelIdentifier}`);
+    const regex = /"contentId":"([a-zA-Z0-9_-]{11})"/g;
+    const videoUrls = [];
+    const seen = new Set();
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+        if (!seen.has(match[1])) {
+            seen.add(match[1]);
+            videoUrls.push(`https://www.youtube.com/watch?v=${match[1]}`);
+        }
+    }
+    return videoUrls;
+}
+
+exports.syncYouTubeStreams = functions.pubsub.schedule('every 5 minutes').onRun(async (context) => {
+    const db = getFirestore();
+    
+    try {
+        // Obtenemos todos los streamings que tengan youtube_auto_sync activado
+        const streamingsSnapshot = await db.collection('streamings')
+            .where('youtube_auto_sync', '==', true)
+            .get();
+            
+        const channelsToUpdate = {};
+        
+        // Agrupamos por channelId para no hacer peticiones duplicadas
+        streamingsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const channelId = data.youtube_channel_id;
+            if (channelId && channelId.trim() !== '') {
+                const key = channelId.trim();
+                if (!channelsToUpdate[key]) {
+                    channelsToUpdate[key] = [];
+                }
+                channelsToUpdate[key].push({ ref: doc.ref, syncType: data.youtube_sync_type || 'principal' });
+            }
+        });
+
+        const batch = db.batch();
+        let updated = 0;
+
+        for (const channelId of Object.keys(channelsToUpdate)) {
+            try {
+                const videoUrls = await fetchYouTubeStreamVideoUrls(channelId);
+
+                if (videoUrls.length > 0) {
+                    const principalUrl = videoUrls[0];
+                    const retransmisionUrl = videoUrls.length > 1 ? videoUrls[1] : principalUrl;
+
+                    for (const streaming of channelsToUpdate[channelId]) {
+                        if (streaming.syncType === 'retransmision') {
+                            batch.update(streaming.ref, { url_video: retransmisionUrl });
+                        } else {
+                            batch.update(streaming.ref, { url_video: principalUrl });
+                        }
+                        updated++;
+                    }
+                } else {
+                    console.log(`No stream videos found for channel: ${channelId}`);
+                }
+            } catch (fetchError) {
+                console.error(`Error fetching YouTube streams for channel ${channelId}:`, fetchError);
+            }
+        }
+
+        if (updated > 0) {
+            await batch.commit();
+            console.log(`YouTube streams synced successfully. Updated ${updated} channels.`);
+        }
+
+    } catch (error) {
+        console.error('Error syncing YouTube streams:', error);
+    }
+    return null;
+});
+
+exports.sendAvanceInformativoPush = functions.firestore
+    .document('marcas/{appId}')
+    .onUpdate(async (change, context) => {
+        const appId = context.params.appId;
+        const beforeData = change.before.data();
+        const afterData = change.after.data();
+
+        const beforeAlertId = beforeData.alerta_global?.id_alerta;
+        const afterAlertId = afterData.alerta_global?.id_alerta;
+
+        // If a new alert was triggered
+        if (afterAlertId && afterAlertId !== beforeAlertId) {
+            const mensaje = afterData.alerta_global?.mensaje || 'Nuevo avance informativo';
+            const topic = `brand_${appId}`;
+
+            const payload = {
+                notification: {
+                    title: 'Avance Informativo',
+                    body: mensaje
+                },
+                topic: topic
+            };
+
+            try {
+                await getMessaging().send(payload);
+                console.log(`Successfully sent push notification to topic: ${topic}`);
+            } catch (error) {
+                console.error(`Error sending push notification to topic ${topic}:`, error);
+            }
+        }
+        return null;
+    });
+
+exports.resolveYouTubeChannelId = functions.firestore
+    .document('streamings/{streamingId}')
+    .onWrite(async (change, context) => {
+        // Si el documento fue eliminado
+        if (!change.after.exists) return null;
+
+        const newData = change.after.data();
+        const oldData = change.before.exists ? change.before.data() : {};
+
+        const newIdOrUrl = newData.youtube_channel_id || '';
+        const oldIdOrUrl = oldData.youtube_channel_id || '';
+
+        // Si no cambió o está vacío, no hacer nada
+        if (newIdOrUrl === oldIdOrUrl || newIdOrUrl.trim() === '') return null;
+
+        let channelStr = newIdOrUrl.trim();
+
+        // Si ya es un ID de canal válido (UC...) o un handle limpio (@...), no hacer nada
+        if ((channelStr.startsWith('UC') && channelStr.length === 24) || 
+            (channelStr.startsWith('@') && !channelStr.includes('/'))) {
+            return null;
+        }
+
+        console.log(`Normalizando canal de YouTube: ${channelStr}`);
+        
+        // Extraer handle o channel ID de URLs de YouTube
+        // Ejemplos:
+        //   https://www.youtube.com/@radioreformaseoye1027
+        //   https://www.youtube.com/@radioreformaseoye1027/streams
+        //   https://www.youtube.com/channel/UCxxxxxx
+        //   https://youtube.com/@MiCanal
+        let normalized = null;
+
+        // Intentar extraer @handle de la URL
+        const handleMatch = channelStr.match(/@([a-zA-Z0-9._-]+)/);
+        if (handleMatch) {
+            normalized = `@${handleMatch[1]}`;
+        }
+
+        // Intentar extraer UC... channel ID de la URL
+        if (!normalized) {
+            const ucMatch = channelStr.match(/(UC[a-zA-Z0-9_-]{22})/);
+            if (ucMatch) {
+                normalized = ucMatch[1];
+            }
+        }
+
+        // Si no pudimos extraer nada reconocible, asumimos que es un handle sin @
+        if (!normalized && !channelStr.includes(' ') && !channelStr.includes('/')) {
+            normalized = `@${channelStr}`;
+        }
+
+        if (normalized && normalized !== channelStr) {
+            console.log(`Normalizado ${channelStr} a ${normalized}`);
+            return change.after.ref.update({ youtube_channel_id: normalized });
+        }
+
+        return null;
+    });
