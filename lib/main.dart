@@ -69,7 +69,7 @@ Future<String> _determineAppId() async {
     if (pkg.contains('sira') || pkg.contains('radioapp2')) return 'sira';
     if (pkg.contains('erancon')) return 'erancon';
     if (pkg == 'com.frecuenciasasociadas.radio') return 'fa';
-    if (pkg == 'com.radioveraguas.radio') return 'rveraguas';
+    if (pkg == 'org.radioveraguas.radio') return 'rveraguas';
   } catch (e) {
     if (kDebugMode) print('ℹ️ PackageInfo detection fallback: $e');
   }

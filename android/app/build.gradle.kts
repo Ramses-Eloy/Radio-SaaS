@@ -78,7 +78,7 @@ android {
         }
         create("rveraguas") {
             dimension = "default"
-            applicationId = "com.radioveraguas.radio"
+            applicationId = "org.radioveraguas.radio"
             resValue("string", "app_name", "RADIO VERAGUAS")
         }
     }
