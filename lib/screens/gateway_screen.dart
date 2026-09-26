@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,8 @@ class GatewayScreen extends StatefulWidget {
   State<GatewayScreen> createState() => _GatewayScreenState();
 }
 
+const _bg = Color(0xFF000000);
+
 class _GatewayScreenState extends State<GatewayScreen> {
   bool _isCheckingCache = true;
   String? _cachedSplashUrl;
@@ -25,6 +28,7 @@ class _GatewayScreenState extends State<GatewayScreen> {
   bool _hasPrecached = false;
   int _secondsRemaining = 0;
   Timer? _timer;
+  Timer? _loadTimeout;
   bool _finished = false;
 
   @override
@@ -151,6 +155,7 @@ class _GatewayScreenState extends State<GatewayScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _loadTimeout?.cancel();
     super.dispose();
   }
 
@@ -158,46 +163,56 @@ class _GatewayScreenState extends State<GatewayScreen> {
   Widget build(BuildContext context) {
     final stationProvider = context.watch<StationProvider>();
     final activeTheme = stationProvider.activeThemeConfig;
+    // Mismo fondo que el arranque nativo: sin destello gris/blanco antes del splash.
+    const loading = Scaffold(backgroundColor: _bg, body: SizedBox.shrink());
 
     if (_isCheckingCache) {
-      return Scaffold(
-        backgroundColor: activeTheme.backgroundColor,
-        body: Center(
-          child: CircularProgressIndicator(color: activeTheme.primaryColor),
-        ),
-      );
+      return loading;
     }
 
     if (_splashVisible && _cachedSplashUrl != null && _cachedSplashUrl!.isNotEmpty) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: _bg,
         body: Stack(
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
               imageUrl: _cachedSplashUrl!,
-              fit: BoxFit.cover,
               fadeInDuration: const Duration(milliseconds: 300),
-              placeholder: (context, url) => Container(
-                color: activeTheme.backgroundColor,
-              ),
+              placeholder: (context, url) {
+                // Primera vez tras instalar: la imagen aún se descarga. Si tarda
+                // demasiado, no bloquear la app.
+                _loadTimeout ??= Timer(const Duration(seconds: 6), () {
+                  if (!_timerRunning) _finishSplash();
+                });
+                return const ColoredBox(color: _bg);
+              },
               imageBuilder: (context, imageProvider) {
+                _loadTimeout?.cancel();
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _startTimer();
                 });
-                return Image(
-                  image: imageProvider,
-                  fit: BoxFit.cover,
+                // La imagen completa sin recortes (contain); los huecos se
+                // rellenan con la misma imagen difuminada.
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                      child: Image(image: imageProvider, fit: BoxFit.cover),
+                    ),
+                    SafeArea(child: Image(image: imageProvider, fit: BoxFit.contain)),
+                  ],
                 );
               },
               errorWidget: (context, url, error) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _finishSplash();
                 });
-                return Container(color: Colors.black);
+                return const ColoredBox(color: _bg);
               },
             ),
-            
+
             if (_timerRunning)
               Positioned(
                 top: MediaQuery.of(context).padding.top + 16,
@@ -245,12 +260,7 @@ class _GatewayScreenState extends State<GatewayScreen> {
     }
 
     if (stationProvider.isLoading) {
-      return Scaffold(
-        backgroundColor: activeTheme.backgroundColor,
-        body: Center(
-          child: CircularProgressIndicator(color: activeTheme.primaryColor),
-        ),
-      );
+      return loading;
     }
 
     if (stationProvider.splashEnabled && stationProvider.splashUrl.isNotEmpty && !_finished) {
@@ -264,12 +274,7 @@ class _GatewayScreenState extends State<GatewayScreen> {
           });
         }
       });
-      return Scaffold(
-        backgroundColor: activeTheme.backgroundColor,
-        body: Center(
-          child: CircularProgressIndicator(color: activeTheme.primaryColor),
-        ),
-      );
+      return loading;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -279,11 +284,6 @@ class _GatewayScreenState extends State<GatewayScreen> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: activeTheme.backgroundColor,
-      body: Center(
-        child: CircularProgressIndicator(color: activeTheme.primaryColor),
-      ),
-    );
+    return loading;
   }
 }

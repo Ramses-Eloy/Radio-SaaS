@@ -47,7 +47,9 @@ class FirestoreService {
         return Station(
           id: doc.id,
           name: data['nombre'] ?? 'Emisora',
-          slogan: data['slogan'] ?? 'La mejor música',
+          slogan: (data['slogan'] as String?)?.trim().isNotEmpty == true
+              ? (data['slogan'] as String).trim()
+              : 'La mejor música',
           logoUrl: data['logo_url'] ?? '',
           logoStyle: data['logo_estilo'] ?? '',
           streamUrl: data['url_audio'] ?? '',

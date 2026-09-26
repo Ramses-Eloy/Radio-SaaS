@@ -32,15 +32,15 @@ class PersistentBottomBanner extends StatelessWidget {
         ? stationProvider.brandBannerHomeLink
         : campaign.bottomBannerActionUrl;
 
-    // Ancho completo y alto según la imagen (con tope), para no recortar el arte.
     final image = Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 50, maxHeight: 120),
+      height: 75,
       color: Colors.black,
       child: AppCachedImage(
         imageUrl: bannerUrl,
         width: double.infinity,
-        fit: BoxFit.fitWidth,
+        height: 75,
+        fit: BoxFit.cover,
         errorWidget: const SizedBox.shrink(),
       ),
     );

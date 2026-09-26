@@ -103,7 +103,8 @@ class _PlayerScreenState extends State<PlayerScreen>
     final slogan = currentStation.slogan.trim();
     final infoTitle = programTitle.isNotEmpty ? programTitle : slogan;
     final host = liveProgram?.hostName.trim() ?? '';
-    final infoSubtitle = host.isNotEmpty ? host : (programTitle.isNotEmpty ? slogan : '');
+    // Sin programa: eslogan arriba y el nombre de la emisora abajo, nunca vacío.
+    final infoSubtitle = host.isNotEmpty ? host : (programTitle.isNotEmpty ? slogan : currentStation.name);
 
     if (stationProvider.isLoading) {
       return Scaffold(
