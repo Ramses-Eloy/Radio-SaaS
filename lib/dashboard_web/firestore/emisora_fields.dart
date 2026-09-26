@@ -69,6 +69,8 @@ abstract final class EmisoraFields {
   static const String splashUrl = 'splash_url';
   /// Clave en `marcas/{appId}` que lee la app móvil para el banner del Home. Valor `''` oculta el banner.
   static const String bannerHomeUrl = 'banner_home_url';
+  /// Enlace al tocar el banner home; vacío = banner estático.
+  static const String bannerHomeLink = 'banner_home_link';
   static const String splashEnabled = 'splash_enabled';
   static const String splashDurationSec = 'splash_duration_sec';
 
