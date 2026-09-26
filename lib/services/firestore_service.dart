@@ -57,6 +57,8 @@ class FirestoreService {
           whatsappNumber: data['social_whatsapp'] ?? '',
           phoneNumber: data['telefono_cabina'] ?? '',
           band: data['banda'] ?? '',
+          whatsappNumberAm: data['social_whatsapp_am'] ?? '',
+          phoneNumberAm: data['telefono_cabina_am'] ?? '',
           socialLinks: SocialLinks(
             facebook: red('facebook', 'social_facebook'),
             instagram: red('instagram', 'social_instagram'),
