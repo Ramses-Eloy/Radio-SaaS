@@ -143,7 +143,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                currentStation.name,
+                currentStation.displayName,
                 style: TextStyle(
                   color: activeTheme.primaryColor,
                   fontWeight: FontWeight.bold,

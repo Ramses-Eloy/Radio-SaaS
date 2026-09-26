@@ -19,6 +19,8 @@ class Emisora {
     required this.socialWhatsapp,
     required this.socialInstagram,
     required this.socialX,
+    this.socialTiktok = '',
+    this.banda = '',
     required this.telefonoCabina,
     required this.currentListeners,
     required this.adClicks,
@@ -40,6 +42,8 @@ class Emisora {
   final String socialWhatsapp;
   final String socialInstagram;
   final String socialX;
+  final String socialTiktok;
+  final String banda;
   final String telefonoCabina;
   final int currentListeners;
   final int adClicks;
@@ -69,6 +73,8 @@ class Emisora {
       socialWhatsapp: d[EmisoraFields.socialWhatsapp] as String? ?? '',
       socialInstagram: d[EmisoraFields.socialInstagram] as String? ?? '',
       socialX: d[EmisoraFields.socialX] as String? ?? d['social_twitter'] as String? ?? '',
+      socialTiktok: d[EmisoraFields.socialTiktok] as String? ?? '',
+      banda: d[EmisoraFields.banda] as String? ?? '',
       telefonoCabina: d[EmisoraFields.telefonoCabina] as String? ?? '',
       currentListeners: (stats['currentListeners'] as num?)?.toInt() ?? 0,
       adClicks: (stats['adClicks'] as num?)?.toInt() ?? 0,
@@ -92,6 +98,8 @@ class Emisora {
         'socialWhatsapp': socialWhatsapp,
         'socialInstagram': socialInstagram,
         'socialX': socialX,
+        'socialTiktok': socialTiktok,
+        'banda': banda,
         'telefonoCabina': telefonoCabina,
         'currentListeners': currentListeners,
         'adClicks': adClicks,
@@ -115,6 +123,8 @@ class Emisora {
       socialWhatsapp: json['socialWhatsapp'] as String? ?? '',
       socialInstagram: json['socialInstagram'] as String? ?? '',
       socialX: json['socialX'] as String? ?? '',
+      socialTiktok: json['socialTiktok'] as String? ?? '',
+      banda: json['banda'] as String? ?? '',
       telefonoCabina: json['telefonoCabina'] as String? ?? '',
       currentListeners: (json['currentListeners'] as num?)?.toInt() ?? 0,
       adClicks: (json['adClicks'] as num?)?.toInt() ?? 0,
@@ -138,6 +148,8 @@ class Emisora {
     String? socialWhatsapp,
     String? socialInstagram,
     String? socialX,
+    String? socialTiktok,
+    String? banda,
     String? telefonoCabina,
     int? currentListeners,
     int? adClicks,
@@ -159,6 +171,8 @@ class Emisora {
       socialWhatsapp: socialWhatsapp ?? this.socialWhatsapp,
       socialInstagram: socialInstagram ?? this.socialInstagram,
       socialX: socialX ?? this.socialX,
+      socialTiktok: socialTiktok ?? this.socialTiktok,
+      banda: banda ?? this.banda,
       telefonoCabina: telefonoCabina ?? this.telefonoCabina,
       currentListeners: currentListeners ?? this.currentListeners,
       adClicks: adClicks ?? this.adClicks,

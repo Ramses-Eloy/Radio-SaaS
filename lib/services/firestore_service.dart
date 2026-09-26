@@ -54,6 +54,7 @@ class FirestoreService {
           showSchedule: data['mostrar_programacion'] ?? true,
           whatsappNumber: data['social_whatsapp'] ?? '',
           phoneNumber: data['telefono_cabina'] ?? '',
+          band: data['banda'] ?? '',
           socialLinks: SocialLinks(
             facebook: data['social_facebook'] ?? '',
             instagram: data['social_instagram'] ?? '',
