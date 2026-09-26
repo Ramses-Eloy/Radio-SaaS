@@ -9,6 +9,7 @@ import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart'
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:radio_whitelabel/dashboard_web/widgets/brand_image_upload_zone.dart';
 import 'package:radio_whitelabel/dashboard_web/widgets/mobile_app_preview.dart';
+import 'package:radio_whitelabel/models/logo_style.dart';
 class EmisoraWorkspace extends StatefulWidget {
   const EmisoraWorkspace({
     super.key,
@@ -48,6 +49,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
   bool _uploadingLogo = false;
   bool _mostrarProgramacion = true;
   String _banda = '';
+  String _logoEstilo = '';
   Set<String> _redesOcultas = {};
 
   final BrandStorageService _brandStorage = BrandStorageService();
@@ -81,6 +83,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
     _x.text = e.socialX;
     _tiktok.text = e.socialTiktok;
     _banda = const ['FM', 'AM', 'AM/FM'].contains(e.banda) ? e.banda : '';
+    _logoEstilo = LogoStyle.normalize(e.logoEstilo);
     _redesOcultas = e.redesOcultas.toSet();
     _telefonoCabina.text = e.telefonoCabina;
     _telefonoCabinaAm.text = e.telefonoCabinaAm;
@@ -234,6 +237,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
           EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
           EmisoraFields.logoUrl: _logoUrl.text.trim(),
+          EmisoraFields.logoEstilo: _logoEstilo,
           EmisoraFields.isVideo: false,
           EmisoraFields.mostrarProgramacion: _mostrarProgramacion,
           EmisoraFields.socialFacebook: _facebook.text.trim(),
@@ -257,6 +261,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           colorHex: ColorHex.normalize(_hex.text),
           colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
           logoUrl: _logoUrl.text.trim(),
+          logoEstilo: _logoEstilo,
           isVideo: false,
           mostrarProgramacion: _mostrarProgramacion,
           socialFacebook: _facebook.text.trim(),
@@ -350,6 +355,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
             hex: _hex,
             hexSecundario: _hexSecundario,
             logoUrl: _logoUrl,
+            logoEstilo: _logoEstilo,
+            onLogoEstiloChanged: (v) => setState(() => _logoEstilo = v),
             showSchedule: widget.dataStore.features.enableSchedule,
             mostrarProgramacion: _mostrarProgramacion,
             onMostrarProgramacionChanged: (v) => setState(() => _mostrarProgramacion = v),
@@ -385,6 +392,8 @@ class _ManagementTab extends StatelessWidget {
     required this.hex,
     required this.hexSecundario,
     required this.logoUrl,
+    required this.logoEstilo,
+    required this.onLogoEstiloChanged,
     required this.showSchedule,
     required this.mostrarProgramacion,
     required this.onMostrarProgramacionChanged,
@@ -411,6 +420,8 @@ class _ManagementTab extends StatelessWidget {
   final TextEditingController hex;
   final TextEditingController hexSecundario;
   final TextEditingController logoUrl;
+  final String logoEstilo;
+  final ValueChanged<String> onLogoEstiloChanged;
   final bool showSchedule;
   final bool mostrarProgramacion;
   final ValueChanged<bool> onMostrarProgramacionChanged;
@@ -770,6 +781,21 @@ class _ManagementTab extends StatelessWidget {
                   previewWidth: 72,
                   previewHeight: 72,
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  key: ValueKey(logoEstilo),
+                  initialValue: logoEstilo,
+                  decoration: const InputDecoration(
+                    labelText: 'Cómo se muestra en el círculo',
+                    helperText: 'Logo cuadrado con fondo: Llenar. Logo transparente: Ajustar.',
+                    prefixIcon: Icon(Icons.crop_free),
+                  ),
+                  items: [
+                    for (final o in LogoStyle.opciones.entries)
+                      DropdownMenuItem(value: o.key, child: Text(o.value)),
+                  ],
+                  onChanged: (v) => onLogoEstiloChanged(v ?? ''),
+                ),
               ],
             ),
           ),
@@ -793,6 +819,7 @@ class _ManagementTab extends StatelessWidget {
                             logoUrl: logoUrl.text,
                             primaryColorHex: hex.text,
                             secondaryColorHex: hexSecundario.text,
+                            logoStyle: logoEstilo,
                           );
                         },
                       );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/logo_style.dart';
 import '../models/station.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
@@ -96,6 +97,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     final audioProvider = context.watch<AudioProvider>();
     final currentStation = stationProvider.currentStation;
     final activeTheme = stationProvider.activeThemeConfig;
+    final logoStyle = LogoStyle.normalize(currentStation.logoStyle);
     final liveProgram = stationProvider.currentLiveProgram;
 
     if (stationProvider.isLoading) {
@@ -185,10 +187,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                       animation: _pulseAnimation,
                       child: ClipOval(
                         child: Padding(
-                          padding: const EdgeInsets.all(12.0),
+                          padding: EdgeInsets.all(LogoStyle.padding(logoStyle, 240)),
                           child: AppCachedImage(
                             imageUrl: currentStation.logoUrl,
-                            fit: BoxFit.contain,
+                            fit: LogoStyle.fit(logoStyle),
                             fallbackIconSize: 80,
                             fallbackIconColor: activeTheme.primaryColor,
                           ),
@@ -200,7 +202,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                           height: 240,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: LogoStyle.background(logoStyle, activeTheme.primaryColor),
                             boxShadow: [
                               BoxShadow(
                                 color: activeTheme.primaryColor

@@ -16,6 +16,8 @@ abstract final class EmisoraFields {
   static const String logoUrl = 'logo_url';
   /// Marca de tiempo de escritura en `logo_url`; la app móvil puede usarla para invalidar caché aunque la URL sea similar.
   static const String logoUrlUpdatedAt = 'logo_url_updated_at';
+  /// Estilo del logo en el círculo del reproductor (ver `LogoStyle`).
+  static const String logoEstilo = 'logo_estilo';
   static const String isVideo = 'isVideo';
   static const String mostrarProgramacion = 'mostrar_programacion';
   static const String socialWhatsapp = 'social_whatsapp';
