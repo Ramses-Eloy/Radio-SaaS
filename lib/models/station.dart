@@ -84,6 +84,8 @@ class Station {
   final String name;
   final String slogan;
   final String logoUrl;
+  /// Ver [LogoStyle]: '', 'negro', 'marca', 'transparente' o 'llenar'.
+  final String logoStyle;
   final String streamUrl;
   final String videoStreamUrl;
   final bool isLive;
@@ -104,6 +106,7 @@ class Station {
     required this.name,
     required this.slogan,
     required this.logoUrl,
+    this.logoStyle = '',
     required this.streamUrl,
     this.videoStreamUrl = '',
     this.isLive = true,
@@ -124,6 +127,7 @@ class Station {
       name: json['name'] ?? 'Hola Panamá',
       slogan: json['slogan'] ?? 'La mejor música',
       logoUrl: json['logoUrl'] ?? 'https://i.postimg.cc/28RpbWC9/hola.png',
+      logoStyle: json['logoStyle'] ?? '',
       streamUrl: json['streamUrl'] ?? 'https://www.streaming507.net:8124/stream',
       videoStreamUrl: json['videoStreamUrl'] ?? '',
       isLive: json['isLive'] ?? true,
@@ -154,6 +158,7 @@ class Station {
         'name': name,
         'slogan': slogan,
         'logoUrl': logoUrl,
+        'logoStyle': logoStyle,
         'streamUrl': streamUrl,
         'videoStreamUrl': videoStreamUrl,
         'isLive': isLive,
@@ -173,6 +178,7 @@ class Station {
     String? name,
     String? slogan,
     String? logoUrl,
+    String? logoStyle,
     String? streamUrl,
     String? videoStreamUrl,
     bool? isLive,
@@ -191,6 +197,7 @@ class Station {
       name: name ?? this.name,
       slogan: slogan ?? this.slogan,
       logoUrl: logoUrl ?? this.logoUrl,
+      logoStyle: logoStyle ?? this.logoStyle,
       streamUrl: streamUrl ?? this.streamUrl,
       videoStreamUrl: videoStreamUrl ?? this.videoStreamUrl,
       isLive: isLive ?? this.isLive,

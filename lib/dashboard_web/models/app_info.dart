@@ -16,6 +16,7 @@ class AppInfo {
     required this.splashEnabled,
     required this.splashDurationSec,
     required this.shareText,
+    this.bannerHomeLink = '',
     required this.playStoreUrl,
     required this.appStoreUrl,
   });
@@ -32,6 +33,7 @@ class AppInfo {
   final bool splashEnabled;
   final int splashDurationSec;
   final String shareText;
+  final String bannerHomeLink;
   final String playStoreUrl;
   final String appStoreUrl;
 
@@ -54,6 +56,7 @@ class AppInfo {
         max: 5,
       ),
       shareText: d[EmisoraFields.shareText] as String? ?? 'Descarga nuestra app y escucha en vivo',
+      bannerHomeLink: d[EmisoraFields.bannerHomeLink] as String? ?? '',
       playStoreUrl: d[EmisoraFields.playStoreUrl] as String? ?? '',
       appStoreUrl: d[EmisoraFields.appStoreUrl] as String? ?? '',
     );
@@ -72,6 +75,7 @@ class AppInfo {
         'splashEnabled': splashEnabled,
         'splashDurationSec': splashDurationSec,
         'shareText': shareText,
+        'bannerHomeLink': bannerHomeLink,
         'playStoreUrl': playStoreUrl,
         'appStoreUrl': appStoreUrl,
       };
@@ -90,6 +94,7 @@ class AppInfo {
       splashEnabled: json['splashEnabled'] as bool? ?? false,
       splashDurationSec: (json['splashDurationSec'] as num?)?.toInt() ?? 3,
       shareText: json['shareText'] as String? ?? 'Descarga nuestra app y escucha en vivo',
+      bannerHomeLink: json['bannerHomeLink'] as String? ?? '',
       playStoreUrl: json['playStoreUrl'] as String? ?? '',
       appStoreUrl: json['appStoreUrl'] as String? ?? '',
     );
@@ -108,6 +113,7 @@ class AppInfo {
     bool? splashEnabled,
     int? splashDurationSec,
     String? shareText,
+    String? bannerHomeLink,
     String? playStoreUrl,
     String? appStoreUrl,
   }) {
@@ -124,6 +130,7 @@ class AppInfo {
       splashEnabled: splashEnabled ?? this.splashEnabled,
       splashDurationSec: splashDurationSec ?? this.splashDurationSec,
       shareText: shareText ?? this.shareText,
+      bannerHomeLink: bannerHomeLink ?? this.bannerHomeLink,
       playStoreUrl: playStoreUrl ?? this.playStoreUrl,
       appStoreUrl: appStoreUrl ?? this.appStoreUrl,
     );

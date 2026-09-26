@@ -10,8 +10,8 @@ class PersistentBottomBanner extends StatelessWidget {
 
   Future<void> _handleBannerClick(BuildContext context, String url, String stationId) async {
     context.read<AdProvider>().logAdClick(adType: 'banner', stationId: stationId);
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
@@ -27,24 +27,28 @@ class PersistentBottomBanner extends StatelessWidget {
 
     if (bannerUrl.isEmpty) return const SizedBox.shrink();
 
-    return Container(
+    // Enlace configurado en el dashboard; vacío = banner estático.
+    final link = stationProvider.brandBannerHomeUrl.isNotEmpty
+        ? stationProvider.brandBannerHomeLink
+        : campaign.bottomBannerActionUrl;
+
+    // Ancho completo y alto según la imagen (con tope), para no recortar el arte.
+    final image = Container(
       width: double.infinity,
-      height: 75,
+      constraints: const BoxConstraints(minHeight: 50, maxHeight: 120),
       color: Colors.black,
-      child: GestureDetector(
-        onTap: () => _handleBannerClick(
-          context,
-          campaign.bottomBannerActionUrl,
-          stationProvider.currentStation.id,
-        ),
-        child: AppCachedImage(
-          imageUrl: bannerUrl,
-          width: double.infinity,
-          height: 75,
-          fit: BoxFit.cover,
-          errorWidget: const SizedBox.shrink(),
-        ),
+      child: AppCachedImage(
+        imageUrl: bannerUrl,
+        width: double.infinity,
+        fit: BoxFit.fitWidth,
+        errorWidget: const SizedBox.shrink(),
       ),
+    );
+
+    if (link.isEmpty) return image;
+    return GestureDetector(
+      onTap: () => _handleBannerClick(context, link, stationProvider.currentStation.id),
+      child: image,
     );
   }
 }

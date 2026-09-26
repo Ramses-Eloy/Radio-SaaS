@@ -33,6 +33,7 @@ class StationProvider extends ChangeNotifier {
   String _radioLabel = 'Radio';
   String _tvLabel = 'Video Live';
   String _brandBannerHomeUrl = '';
+  String _brandBannerHomeLink = '';
   String _splashUrl = '';
   bool _splashEnabled = true;
   int _splashDurationSec = 5;
@@ -51,6 +52,7 @@ class StationProvider extends ChangeNotifier {
   String get tvLabel => _tvLabel;
   String get scheduleLabel => _scheduleLabel;
   String get brandBannerHomeUrl => _brandBannerHomeUrl;
+  String get brandBannerHomeLink => _brandBannerHomeLink;
   String get splashUrl => _splashUrl;
   bool get splashEnabled => _splashEnabled;
   int get splashDurationSec => _splashDurationSec;
@@ -156,6 +158,7 @@ class StationProvider extends ChangeNotifier {
           _tvLabel = data['tv_label'] ?? _tvLabel;
           _scheduleLabel = data['schedule_label'] ?? _scheduleLabel;
           _brandBannerHomeUrl = data['banner_home_url'] ?? _brandBannerHomeUrl;
+          _brandBannerHomeLink = (data['banner_home_link'] ?? '').toString().trim();
           if (data['ownerEmail'] != null) _brandEmail = data['ownerEmail'];
           _splashUrl = data['splash_url'] ?? _splashUrl;
           _splashEnabled = data['splash_enabled'] ?? _splashEnabled;
@@ -346,16 +349,17 @@ class StationProvider extends ChangeNotifier {
     );
   }
 
-  ThemeConfig get activeThemeConfig {
-    if (_themeMode == ThemeMode.system) {
-      final brightness = PlatformDispatcher.instance.platformBrightness;
-      return brightness == Brightness.dark ? currentStation.darkTheme : currentStation.lightTheme;
-    }
-    return _themeMode == ThemeMode.dark ? currentStation.darkTheme : currentStation.lightTheme;
-  }
+  /// Modo efectivo: con `system` usa el del teléfono.
+  bool get isDark => _themeMode == ThemeMode.system
+      ? PlatformDispatcher.instance.platformBrightness == Brightness.dark
+      : _themeMode == ThemeMode.dark;
+
+  ThemeConfig get activeThemeConfig =>
+      isDark ? currentStation.darkTheme : currentStation.lightTheme;
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    // Desde `system` el primer toque debe cambiar lo que se ve, no fijar el mismo modo.
+    _themeMode = isDark ? ThemeMode.light : ThemeMode.dark;
     _persistThemePreference();
     notifyListeners();
   }

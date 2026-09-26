@@ -16,6 +16,8 @@ abstract final class EmisoraFields {
   static const String logoUrl = 'logo_url';
   /// Marca de tiempo de escritura en `logo_url`; la app móvil puede usarla para invalidar caché aunque la URL sea similar.
   static const String logoUrlUpdatedAt = 'logo_url_updated_at';
+  /// Estilo del logo en el círculo del reproductor (ver `LogoStyle`).
+  static const String logoEstilo = 'logo_estilo';
   static const String isVideo = 'isVideo';
   static const String mostrarProgramacion = 'mostrar_programacion';
   static const String socialWhatsapp = 'social_whatsapp';
@@ -67,6 +69,8 @@ abstract final class EmisoraFields {
   static const String splashUrl = 'splash_url';
   /// Clave en `marcas/{appId}` que lee la app móvil para el banner del Home. Valor `''` oculta el banner.
   static const String bannerHomeUrl = 'banner_home_url';
+  /// Enlace al tocar el banner home; vacío = banner estático.
+  static const String bannerHomeLink = 'banner_home_link';
   static const String splashEnabled = 'splash_enabled';
   static const String splashDurationSec = 'splash_duration_sec';
 

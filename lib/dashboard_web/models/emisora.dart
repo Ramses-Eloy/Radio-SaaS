@@ -13,6 +13,7 @@ class Emisora {
     required this.colorHex,
     this.colorSecundarioHex = '#35ACE5',
     required this.logoUrl,
+    this.logoEstilo = '',
     required this.isVideo,
     required this.mostrarProgramacion,
     required this.socialFacebook,
@@ -39,6 +40,7 @@ class Emisora {
   final String colorHex;
   final String colorSecundarioHex;
   final String logoUrl;
+  final String logoEstilo;
   final bool isVideo;
   final bool mostrarProgramacion;
   final String socialFacebook;
@@ -73,6 +75,7 @@ class Emisora {
       colorHex: d[EmisoraFields.colorHex] as String? ?? ColorHex.defaultHex,
       colorSecundarioHex: d[EmisoraFields.colorSecundarioHex] as String? ?? d[EmisoraFields.colorHex] as String? ?? '#35ACE5',
       logoUrl: d[EmisoraFields.logoUrl] as String? ?? '',
+      logoEstilo: d[EmisoraFields.logoEstilo] as String? ?? '',
       isVideo: d[EmisoraFields.isVideo] as bool? ?? false,
       mostrarProgramacion: d[EmisoraFields.mostrarProgramacion] as bool? ?? true,
       socialFacebook: d[EmisoraFields.socialFacebook] as String? ?? '',
@@ -101,6 +104,7 @@ class Emisora {
         'colorHex': colorHex,
         'colorSecundarioHex': colorSecundarioHex,
         'logoUrl': logoUrl,
+        'logoEstilo': logoEstilo,
         'isVideo': isVideo,
         'mostrarProgramacion': mostrarProgramacion,
         'socialFacebook': socialFacebook,
@@ -129,6 +133,7 @@ class Emisora {
       colorHex: json['colorHex'] as String? ?? ColorHex.defaultHex,
       colorSecundarioHex: json['colorSecundarioHex'] as String? ?? json['colorHex'] as String? ?? '#35ACE5',
       logoUrl: json['logoUrl'] as String? ?? '',
+      logoEstilo: json['logoEstilo'] as String? ?? '',
       isVideo: json['isVideo'] as bool? ?? false,
       mostrarProgramacion: json['mostrarProgramacion'] as bool? ?? true,
       socialFacebook: json['socialFacebook'] as String? ?? '',
@@ -157,6 +162,7 @@ class Emisora {
     String? colorHex,
     String? colorSecundarioHex,
     String? logoUrl,
+    String? logoEstilo,
     bool? isVideo,
     bool? mostrarProgramacion,
     String? socialFacebook,
@@ -183,6 +189,7 @@ class Emisora {
       colorHex: colorHex ?? this.colorHex,
       colorSecundarioHex: colorSecundarioHex ?? this.colorSecundarioHex,
       logoUrl: logoUrl ?? this.logoUrl,
+      logoEstilo: logoEstilo ?? this.logoEstilo,
       isVideo: isVideo ?? this.isVideo,
       mostrarProgramacion: mostrarProgramacion ?? this.mostrarProgramacion,
       socialFacebook: socialFacebook ?? this.socialFacebook,

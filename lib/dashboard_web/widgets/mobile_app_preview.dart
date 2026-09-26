@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:radio_whitelabel/models/logo_style.dart';
 
 class MobileAppPreview extends StatelessWidget {
   const MobileAppPreview({
@@ -8,6 +9,7 @@ class MobileAppPreview extends StatelessWidget {
     required this.primaryColorHex,
     required this.secondaryColorHex,
     this.isStreaming = false,
+    this.logoStyle = '',
   });
 
   final String brandName;
@@ -15,6 +17,7 @@ class MobileAppPreview extends StatelessWidget {
   final String primaryColorHex;
   final String secondaryColorHex;
   final bool isStreaming;
+  final String logoStyle;
 
   Color _parseColor(String hexStr, Color fallback) {
     if (hexStr.isEmpty) return fallback;
@@ -33,6 +36,7 @@ class MobileAppPreview extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final primaryColor = _parseColor(primaryColorHex, scheme.primary);
     final secondaryColor = _parseColor(secondaryColorHex, primaryColor);
+    final style = LogoStyle.normalize(logoStyle);
 
     return Container(
       width: 280,
@@ -122,7 +126,7 @@ class MobileAppPreview extends StatelessWidget {
                           width: 180,
                           height: 180,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: LogoStyle.background(style, primaryColor),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -135,10 +139,10 @@ class MobileAppPreview extends StatelessWidget {
                           child: logoUrl.isNotEmpty
                               ? ClipOval(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(20.0),
+                                    padding: EdgeInsets.all(LogoStyle.padding(style, 180)),
                                     child: Image.network(
                                       logoUrl,
-                                      fit: BoxFit.contain,
+                                      fit: LogoStyle.fit(style),
                                       errorBuilder: (context, error, stackTrace) => _buildPlaceholderLogo(primaryColor),
                                     ),
                                   ),

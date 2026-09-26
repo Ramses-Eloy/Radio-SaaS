@@ -49,6 +49,7 @@ class FirestoreService {
           name: data['nombre'] ?? 'Emisora',
           slogan: data['slogan'] ?? 'La mejor música',
           logoUrl: data['logo_url'] ?? '',
+          logoStyle: data['logo_estilo'] ?? '',
           streamUrl: data['url_audio'] ?? '',
           videoStreamUrl: data['url_video'] ?? '',
           isLive: true,

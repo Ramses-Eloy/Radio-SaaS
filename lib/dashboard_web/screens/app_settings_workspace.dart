@@ -38,6 +38,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
   final _logoUrl = TextEditingController();
   final _splashUrl = TextEditingController();
   final _bannerHomeUrl = TextEditingController();
+  final _bannerHomeLink = TextEditingController();
   final _splashDuration = TextEditingController();
   final _flashInformativo = TextEditingController();
   final _shareTextController = TextEditingController();
@@ -83,6 +84,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _logoUrl.text = i.logoUrl;
     _splashUrl.text = i.splashUrl;
     _bannerHomeUrl.text = i.bannerHomeUrl;
+    _bannerHomeLink.text = i.bannerHomeLink;
     _shareTextController.text = i.shareText;
     _splashEnabled = FirestoreTypedValue.toFirestoreBool(i.splashEnabled);
     _splashDuration.text = '${FirestoreTypedValue.toFirestoreInt(i.splashDurationSec, min: 1, max: 5)}';
@@ -97,6 +99,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
     _logoUrl.dispose();
     _splashUrl.dispose();
     _bannerHomeUrl.dispose();
+    _bannerHomeLink.dispose();
     _splashDuration.dispose();
     _flashInformativo.dispose();
     _shareTextController.dispose();
@@ -202,6 +205,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
   Future<void> _save() async {
     final splashUrl = FirestoreTypedValue.toFirestoreString(_splashUrl.text);
     final bannerHomeUrl = FirestoreTypedValue.toFirestoreString(_bannerHomeUrl.text);
+    final bannerHomeLink = _bannerHomeLink.text.trim();
     final splashEnabled = FirestoreTypedValue.toFirestoreBool(_splashEnabled);
     final splashDurationSec = FirestoreTypedValue.toFirestoreInt(
       _parseSplashDuration(),
@@ -209,7 +213,8 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
       max: 5,
     );
 
-    if (!UrlField.isValidOptionalImageUrl(splashUrl) || !UrlField.isValidOptionalImageUrl(bannerHomeUrl)) {
+    if (!UrlField.isValidOptionalImageUrl(splashUrl) || !UrlField.isValidOptionalImageUrl(bannerHomeUrl) ||
+        !UrlField.isValidOptionalImageUrl(bannerHomeLink)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Las URLs de publicidad deben empezar por http:// o https:// (o dejarse vacías).')),
@@ -232,6 +237,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
         splashEnabled: splashEnabled,
         splashDurationSec: splashDurationSec,
         shareText: _shareTextController.text.trim(),
+        bannerHomeLink: bannerHomeLink,
       );
       if (!mounted) return;
       widget.dataStore.patchAppInfo(
@@ -247,6 +253,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
           splashEnabled: splashEnabled,
           splashDurationSec: splashDurationSec,
           shareText: _shareTextController.text.trim(),
+          bannerHomeLink: bannerHomeLink,
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ajustes guardados.')));
@@ -595,6 +602,16 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                   previewHeight: 56,
                   previewFit: BoxFit.cover,
                   icon: Icons.view_day_outlined,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bannerHomeLink,
+                  decoration: const InputDecoration(
+                    labelText: 'Enlace al tocar el banner (opcional)',
+                    helperText: 'Publicación, página, WhatsApp… Vacío: el banner no abre nada.',
+                    prefixIcon: Icon(Icons.link),
+                  ),
+                  keyboardType: TextInputType.url,
                 ),
               ],
             ),

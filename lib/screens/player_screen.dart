@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/logo_style.dart';
 import '../models/station.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
@@ -96,7 +97,13 @@ class _PlayerScreenState extends State<PlayerScreen>
     final audioProvider = context.watch<AudioProvider>();
     final currentStation = stationProvider.currentStation;
     final activeTheme = stationProvider.activeThemeConfig;
+    final logoStyle = LogoStyle.normalize(currentStation.logoStyle);
     final liveProgram = stationProvider.currentLiveProgram;
+    final programTitle = liveProgram?.title.trim() ?? '';
+    final slogan = currentStation.slogan.trim();
+    final infoTitle = programTitle.isNotEmpty ? programTitle : slogan;
+    final host = liveProgram?.hostName.trim() ?? '';
+    final infoSubtitle = host.isNotEmpty ? host : (programTitle.isNotEmpty ? slogan : '');
 
     if (stationProvider.isLoading) {
       return Scaffold(
@@ -158,7 +165,7 @@ class _PlayerScreenState extends State<PlayerScreen>
         actions: [
           IconButton(
             icon: Icon(
-              stationProvider.themeMode == ThemeMode.dark
+              stationProvider.isDark
                   ? Icons.wb_sunny_rounded
                   : Icons.dark_mode_rounded,
               color: activeTheme.primaryColor,
@@ -185,10 +192,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                       animation: _pulseAnimation,
                       child: ClipOval(
                         child: Padding(
-                          padding: const EdgeInsets.all(12.0),
+                          padding: EdgeInsets.all(LogoStyle.padding(logoStyle, 240)),
                           child: AppCachedImage(
                             imageUrl: currentStation.logoUrl,
-                            fit: BoxFit.contain,
+                            fit: LogoStyle.fit(logoStyle),
                             fallbackIconSize: 80,
                             fallbackIconColor: activeTheme.primaryColor,
                           ),
@@ -200,7 +207,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                           height: 240,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: LogoStyle.background(logoStyle, activeTheme.primaryColor),
                             boxShadow: [
                               BoxShadow(
                                 color: activeTheme.primaryColor
@@ -258,25 +265,29 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                 const SizedBox(height: 20),
 
-                // Program / Show info
-                Text(
-                  liveProgram?.title ?? currentStation.slogan,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.titleLarge?.color,
+                // Programa al aire; si no hay, el eslogan. Campos vacíos no se pintan.
+                if (infoTitle.isNotEmpty)
+                  Text(
+                    infoTitle,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  liveProgram != null && liveProgram.hostName.isNotEmpty ? liveProgram.hostName : currentStation.slogan,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: activeTheme.primaryColor,
-                    fontWeight: FontWeight.w600,
+                if (infoSubtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    infoSubtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: activeTheme.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                ],
                 const SizedBox(height: 20),
 
                 // Audio Wave Visualizer
@@ -340,7 +351,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                   decoration: BoxDecoration(
                     color: activeTheme.cardColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(
+                      color: stationProvider.isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -415,28 +430,33 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
 
     final suffix = station.band.isEmpty || station.band == 'AM/FM' ? '' : ' ${station.band}';
+    // Sin número configurado el botón no se muestra (antes abría WhatsApp/llamada vacíos).
+    final hasWhatsapp = station.whatsappNumber.isNotEmpty || station.whatsappNumberAm.isNotEmpty;
+    final hasPhone = station.phoneNumber.isNotEmpty || station.phoneNumberAm.isNotEmpty;
 
     return Row(
       children: [
-        Expanded(
-          child: _cabinaButton(
-            const Color(0xFF25D366),
-            Icons.chat_bubble_outline,
-            'WhatsApp Cabina$suffix',
-            () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
-                (n) => _launchWhatsApp(context, n)),
+        if (hasWhatsapp)
+          Expanded(
+            child: _cabinaButton(
+              const Color(0xFF25D366),
+              Icons.chat_bubble_outline,
+              'WhatsApp Cabina$suffix',
+              () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
+                  (n) => _launchWhatsApp(context, n)),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _cabinaButton(
-            activeTheme.primaryColor,
-            Icons.phone_in_talk,
-            'Llamar a Cabina$suffix',
-            () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
-                (n) => _launchPhoneCall(context, n)),
+        if (hasWhatsapp && hasPhone) const SizedBox(width: 8),
+        if (hasPhone)
+          Expanded(
+            child: _cabinaButton(
+              activeTheme.primaryColor,
+              Icons.phone_in_talk,
+              'Llamar a Cabina$suffix',
+              () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
+                  (n) => _launchPhoneCall(context, n)),
+            ),
           ),
-        ),
       ],
     );
   }

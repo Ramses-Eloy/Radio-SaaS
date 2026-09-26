@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
@@ -14,44 +14,24 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _selectedTimerMinutes = 0; // 0 = Off
-  Timer? _sleepTimer;
-
   void _setSleepTimer(int minutes) {
-    _sleepTimer?.cancel();
-    setState(() {
-      _selectedTimerMinutes = minutes;
-    });
-
-    if (minutes > 0) {
-      _sleepTimer = Timer(Duration(minutes: minutes), () {
-        if (mounted) {
-          context.read<AudioProvider>().pause();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🌙 Temporizador de apagado activado: Reproductor pausado.'),
-            ),
-          );
-          setState(() {
-            _selectedTimerMinutes = 0;
-          });
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('⏱️ Temporizador configurado a $minutes minutos.'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    context.read<AudioProvider>().setSleepTimer(
+      minutes,
+      onFired: () => messenger.showSnackBar(
         const SnackBar(
-          content: Text('⏱️ Temporizador desactivado.'),
-          duration: Duration(seconds: 2),
+          content: Text('🌙 Temporizador de apagado activado: Reproductor pausado.'),
         ),
-      );
-    }
+      ),
+    );
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(minutes > 0
+            ? '⏱️ Temporizador configurado a $minutes minutos.'
+            : '⏱️ Temporizador desactivado.'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _shareApp() async {
@@ -73,15 +53,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   @override
-  void dispose() {
-    _sleepTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final stationProvider = context.watch<StationProvider>();
     final activeTheme = stationProvider.activeThemeConfig;
+    final sleepMinutes = context.watch<AudioProvider>().sleepMinutes;
+    final cardBorder = stationProvider.isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Scaffold(
       backgroundColor: activeTheme.backgroundColor,
@@ -106,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: BoxDecoration(
                 color: activeTheme.cardColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: cardBorder),
               ),
               child: Column(
                 children: [
@@ -125,15 +103,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     leading: Icon(Icons.timer, color: activeTheme.primaryColor),
                     title: const Text('Temporizador de Apagado', style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(
-                      _selectedTimerMinutes == 0
+                      sleepMinutes == 0
                           ? 'Desactivado'
-                          : 'Se apagará en $_selectedTimerMinutes minutos',
+                          : 'Se apagará en $sleepMinutes minutos',
                       style: TextStyle(
-                        color: _selectedTimerMinutes > 0 ? Colors.amber : Colors.grey,
+                        color: sleepMinutes > 0 ? Colors.amber : Colors.grey,
                       ),
                     ),
                     trailing: DropdownButton<int>(
-                      value: _selectedTimerMinutes,
+                      value: sleepMinutes,
                       dropdownColor: activeTheme.cardColor,
                       items: const [
                         DropdownMenuItem(value: 0, child: Text('Off')),
@@ -157,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               decoration: BoxDecoration(
                 color: activeTheme.cardColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: cardBorder),
               ),
               child: Column(
                 children: [
@@ -171,7 +149,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ListTile(
                     leading: Icon(Icons.info_outline, color: activeTheme.secondaryColor),
                     title: Text(stationProvider.brandName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Versión 1.0.0'),
+                    subtitle: FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snap) =>
+                          Text(snap.hasData ? 'Versión ${snap.data!.version}' : ''),
+                    ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
