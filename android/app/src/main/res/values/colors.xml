@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo del arranque nativo; igual al fondo previo al splash en Flutter. -->
+    <color name="launch_bg">#000000</color>
+</resources>
