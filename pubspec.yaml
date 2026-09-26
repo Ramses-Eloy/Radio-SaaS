@@ -87,6 +87,8 @@ flutter:
     - assets/icons/erancon/icon_foreground.png
     - assets/icons/sira/icon.png
     - assets/icons/sira/icon_foreground.png
+    - assets/icons/fa/icon.png
+    - assets/icons/fa/icon_foreground.png
     - assets/icons/rveraguas/icon.png
     - assets/icons/rveraguas/icon_foreground.png
 
