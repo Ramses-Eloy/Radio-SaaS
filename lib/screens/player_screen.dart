@@ -430,28 +430,33 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
 
     final suffix = station.band.isEmpty || station.band == 'AM/FM' ? '' : ' ${station.band}';
+    // Sin número configurado el botón no se muestra (antes abría WhatsApp/llamada vacíos).
+    final hasWhatsapp = station.whatsappNumber.isNotEmpty || station.whatsappNumberAm.isNotEmpty;
+    final hasPhone = station.phoneNumber.isNotEmpty || station.phoneNumberAm.isNotEmpty;
 
     return Row(
       children: [
-        Expanded(
-          child: _cabinaButton(
-            const Color(0xFF25D366),
-            Icons.chat_bubble_outline,
-            'WhatsApp Cabina$suffix',
-            () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
-                (n) => _launchWhatsApp(context, n)),
+        if (hasWhatsapp)
+          Expanded(
+            child: _cabinaButton(
+              const Color(0xFF25D366),
+              Icons.chat_bubble_outline,
+              'WhatsApp Cabina$suffix',
+              () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
+                  (n) => _launchWhatsApp(context, n)),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _cabinaButton(
-            activeTheme.primaryColor,
-            Icons.phone_in_talk,
-            'Llamar a Cabina$suffix',
-            () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
-                (n) => _launchPhoneCall(context, n)),
+        if (hasWhatsapp && hasPhone) const SizedBox(width: 8),
+        if (hasPhone)
+          Expanded(
+            child: _cabinaButton(
+              activeTheme.primaryColor,
+              Icons.phone_in_talk,
+              'Llamar a Cabina$suffix',
+              () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
+                  (n) => _launchPhoneCall(context, n)),
+            ),
           ),
-        ),
       ],
     );
   }
