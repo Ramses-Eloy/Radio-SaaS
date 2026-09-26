@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
 
 
+import '../../screens/dashboard_screen.dart';
+import '../../services/client_data_store.dart';
+import '../../services/emisora_repository.dart';
 import '../../utils/color_hex.dart';
 import '../services/superadmin_repository.dart';
 import '../widgets/new_brand_modal.dart';
@@ -71,6 +74,18 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
       barrierDismissible: false,
       builder: (ctx) => ManageBrandDialog(marca: marca, repository: _repo),
     );
+  }
+
+  /// Panel de la marca tal como lo ve su dueño (ajustes, splash, banner…).
+  void _openPanel(MarcaRecord marca) {
+    final repo = EmisoraRepository();
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => DashboardScreen(
+        repository: repo,
+        dataStore: ClientDataStore(repo),
+        ownerEmail: marca.ownerEmail,
+      ),
+    ));
   }
 
   void _openNewBrandModal() {
@@ -169,6 +184,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                           textTheme: textTheme,
                           onConfigureModules: _openManageBrand,
                           onEdit: _openManageBrand,
+                          onOpenPanel: _openPanel,
                         ),
                 ),
               ],
@@ -357,6 +373,7 @@ class _MarcasTable extends StatelessWidget {
     required this.textTheme,
     required this.onConfigureModules,
     required this.onEdit,
+    required this.onOpenPanel,
   });
 
   final List<MarcaRecord> marcas;
@@ -364,6 +381,7 @@ class _MarcasTable extends StatelessWidget {
   final TextTheme textTheme;
   final ValueChanged<MarcaRecord> onConfigureModules;
   final ValueChanged<MarcaRecord> onEdit;
+  final ValueChanged<MarcaRecord> onOpenPanel;
 
   @override
   Widget build(BuildContext context) {
@@ -413,6 +431,7 @@ class _MarcasTable extends StatelessWidget {
                   textTheme: textTheme,
                   onConfigureModules: () => onConfigureModules(m),
                   onEdit: () => onEdit(m),
+                  onOpenPanel: () => onOpenPanel(m),
                 )),
           ],
         ),
@@ -449,6 +468,7 @@ class _MarcaRow extends StatelessWidget {
     required this.textTheme,
     required this.onConfigureModules,
     required this.onEdit,
+    required this.onOpenPanel,
   });
 
   final MarcaRecord marca;
@@ -456,6 +476,7 @@ class _MarcaRow extends StatelessWidget {
   final TextTheme textTheme;
   final VoidCallback onConfigureModules;
   final VoidCallback onEdit;
+  final VoidCallback onOpenPanel;
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +623,13 @@ class _MarcaRow extends StatelessWidget {
                   child: IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 20),
                     onPressed: onEdit,
+                  ),
+                ),
+                Tooltip(
+                  message: 'Abrir panel (ajustes, splash, banner)',
+                  child: IconButton(
+                    icon: const Icon(Icons.open_in_new, size: 20),
+                    onPressed: onOpenPanel,
                   ),
                 ),
               ],

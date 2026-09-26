@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../services/telemetry_service.dart';
+import '../utils/stream_url.dart';
 
 class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -79,7 +80,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       await _audioPlayer.setAudioSource(
         AudioSource.uri(
-          Uri.parse(streamUrl.trim()),
+          Uri.parse(withScheme(streamUrl)),
           tag: MediaItem(
             id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
             album: stationName,
@@ -124,7 +125,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
 
       final source = AudioSource.uri(
-        Uri.parse(streamUrl.trim()),
+        Uri.parse(withScheme(streamUrl)),
         tag: MediaItem(
           id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
           album: stationName,
@@ -134,14 +135,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         ),
       );
       await _audioPlayer.stop(); // Stop before changing source to force notification refresh
-      try {
-        await _audioPlayer.setAudioSource(source);
-      } on PlayerException {
-        // Algunos servidores devuelven a veces una redirección sin esquema
-        // (MalformedURLException en Android). Un segundo intento suele entrar.
-        await Future.delayed(const Duration(milliseconds: 500));
-        await _audioPlayer.setAudioSource(source);
-      }
+      await _audioPlayer.setAudioSource(source);
       await _audioPlayer.play();
 
       TelemetryService().logEvent(

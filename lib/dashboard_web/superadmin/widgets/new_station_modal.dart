@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:radio_whitelabel/utils/stream_url.dart';
 import '../../services/brand_storage_service.dart';
 import '../services/superadmin_repository.dart';
 
@@ -134,7 +135,7 @@ class _NewStationModalState extends State<NewStationModal> {
           appId: widget.appId,
           ownerEmail: widget.ownerEmail,
           nombre: _nombreController.text.trim(),
-          urlAudio: _urlController.text.trim(),
+          urlAudio: withScheme(_urlController.text),
           colorHex: _colorHexController.text.trim(),
           colorSecundarioHex: _colorSecundarioHexController.text.trim(),
           mostrarProgramacion: _mostrarProgramacion,

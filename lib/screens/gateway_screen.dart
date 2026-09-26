@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -192,19 +191,9 @@ class _GatewayScreenState extends State<GatewayScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _startTimer();
                 });
-                // Un 9:16 se ve completo a todo el ancho (contain). En pantallas
-                // más alargadas que 9:16 la franja de arriba/abajo es la misma
-                // imagen difuminada, así no queda un borde negro.
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ImageFiltered(
-                      imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                      child: Image(image: imageProvider, fit: BoxFit.cover),
-                    ),
-                    Image(image: imageProvider, fit: BoxFit.contain),
-                  ],
-                );
+                // Completo de arriba a abajo; en pantallas más anchas se
+                // recortan los lados.
+                return Image(image: imageProvider, fit: BoxFit.fitHeight);
               },
               errorWidget: (context, url, error) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {

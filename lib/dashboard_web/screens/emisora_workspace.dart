@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:radio_whitelabel/utils/stream_url.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:radio_whitelabel/dashboard_web/firestore/emisora_fields.dart';
 import 'package:radio_whitelabel/dashboard_web/models/emisora.dart';
@@ -232,7 +233,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
         widget.emisora.id,
         {
           EmisoraFields.nombre: _nombre.text.trim(),
-          EmisoraFields.urlAudio: _urlAudio.text.trim(),
+          EmisoraFields.urlAudio: withScheme(_urlAudio.text),
           EmisoraFields.urlVideo: widget.emisora.urlVideo,
           EmisoraFields.colorHex: ColorHex.normalize(_hex.text),
           EmisoraFields.colorSecundarioHex: ColorHex.normalize(_hexSecundario.text),
