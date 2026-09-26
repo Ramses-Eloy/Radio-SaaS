@@ -59,6 +59,9 @@ class SocialLinks {
     this.twitter = '',
   });
 
+  bool get hasAny =>
+      instagram.isNotEmpty || facebook.isNotEmpty || tiktok.isNotEmpty || twitter.isNotEmpty;
+
   factory SocialLinks.fromJson(Map<String, dynamic> json) {
     return SocialLinks(
       instagram: json['instagram'] ?? '',
@@ -87,6 +90,11 @@ class Station {
   final bool showSchedule;
   final String whatsappNumber;
   final String phoneNumber;
+  /// Banda de los botones de cabina: '', 'AM', 'FM' o 'AM/FM'.
+  final String band;
+  /// Contacto AM cuando [band] es 'AM/FM' (whatsappNumber/phoneNumber son los de FM).
+  final String whatsappNumberAm;
+  final String phoneNumberAm;
   final SocialLinks socialLinks;
   final ThemeConfig lightTheme;
   final ThemeConfig darkTheme;
@@ -102,6 +110,9 @@ class Station {
     this.showSchedule = true,
     required this.whatsappNumber,
     required this.phoneNumber,
+    this.band = '',
+    this.whatsappNumberAm = '',
+    this.phoneNumberAm = '',
     required this.socialLinks,
     required this.lightTheme,
     required this.darkTheme,
@@ -119,6 +130,9 @@ class Station {
       showSchedule: json['showSchedule'] ?? true,
       whatsappNumber: json['whatsappNumber'] ?? 'https://wa.me/6679-1708',
       phoneNumber: json['phoneNumber'] ?? '9701033',
+      band: json['band'] ?? '',
+      whatsappNumberAm: json['whatsappNumberAm'] ?? '',
+      phoneNumberAm: json['phoneNumberAm'] ?? '',
       socialLinks: SocialLinks.fromJson(json['socialLinks'] ?? {}),
       lightTheme: ThemeConfig.fromJson(json['lightTheme'] ?? {
         'primaryColorHex': '#205CC6',
@@ -146,6 +160,9 @@ class Station {
         'showSchedule': showSchedule,
         'whatsappNumber': whatsappNumber,
         'phoneNumber': phoneNumber,
+        'band': band,
+        'whatsappNumberAm': whatsappNumberAm,
+        'phoneNumberAm': phoneNumberAm,
         'socialLinks': socialLinks.toJson(),
         'lightTheme': lightTheme.toJson(),
         'darkTheme': darkTheme.toJson(),
@@ -162,6 +179,9 @@ class Station {
     bool? showSchedule,
     String? whatsappNumber,
     String? phoneNumber,
+    String? band,
+    String? whatsappNumberAm,
+    String? phoneNumberAm,
     SocialLinks? socialLinks,
     ThemeConfig? lightTheme,
     ThemeConfig? darkTheme,
@@ -177,6 +197,9 @@ class Station {
       showSchedule: showSchedule ?? this.showSchedule,
       whatsappNumber: whatsappNumber ?? this.whatsappNumber,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      band: band ?? this.band,
+      whatsappNumberAm: whatsappNumberAm ?? this.whatsappNumberAm,
+      phoneNumberAm: phoneNumberAm ?? this.phoneNumberAm,
       socialLinks: socialLinks ?? this.socialLinks,
       lightTheme: lightTheme ?? this.lightTheme,
       darkTheme: darkTheme ?? this.darkTheme,

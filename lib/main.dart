@@ -350,7 +350,7 @@ class _MainNavigationFrameState extends State<MainNavigationFrame>
       items.add(BottomNavigationBarItem(
         icon: const Icon(Icons.radio_outlined),
         activeIcon: const Icon(Icons.radio),
-        label: stationProvider.radioLabel.split(' ').first,
+        label: stationProvider.radioLabel,
       ));
     }
 
@@ -390,7 +390,7 @@ class _MainNavigationFrameState extends State<MainNavigationFrame>
       items.add(BottomNavigationBarItem(
         icon: const Icon(Icons.radio_outlined),
         activeIcon: const Icon(Icons.radio),
-        label: stationProvider.radioLabel.split(' ').first,
+        label: stationProvider.radioLabel,
       ));
     }
 

@@ -184,7 +184,7 @@ exports.createBrand = functions.https.onCall(async (data, context) => {
             banner_home_url: '',
             splash_enabled: true,
             splash_duration_sec: 5,
-            radio_label: 'En Vivo',
+            radio_label: 'Radio',
             tv_label: 'Video Live',
             schedule_label: 'Programación',
             features: features,
@@ -401,7 +401,7 @@ exports.syncYouTubeStreams = functions.pubsub.schedule('every 5 minutes').onRun(
                 if (!channelsToUpdate[key]) {
                     channelsToUpdate[key] = [];
                 }
-                channelsToUpdate[key].push({ ref: doc.ref, syncType: data.youtube_sync_type || 'principal' });
+                channelsToUpdate[key].push({ ref: doc.ref, syncType: data.youtube_sync_type || 'principal', currentUrl: data.url_video || '' });
             }
         });
 
@@ -417,11 +417,10 @@ exports.syncYouTubeStreams = functions.pubsub.schedule('every 5 minutes').onRun(
                     const retransmisionUrl = videoUrls.length > 1 ? videoUrls[1] : principalUrl;
 
                     for (const streaming of channelsToUpdate[channelId]) {
-                        if (streaming.syncType === 'retransmision') {
-                            batch.update(streaming.ref, { url_video: retransmisionUrl });
-                        } else {
-                            batch.update(streaming.ref, { url_video: principalUrl });
-                        }
+                        const newUrl = streaming.syncType === 'retransmision' ? retransmisionUrl : principalUrl;
+                        // Solo escribir si cambió: evita escrituras y relecturas en los oyentes.
+                        if (newUrl === streaming.currentUrl) continue;
+                        batch.update(streaming.ref, { url_video: newUrl });
                         updated++;
                     }
                 } else {

@@ -472,9 +472,9 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
                               TextField(
                                 controller: _youtubeChannelId,
                                 decoration: const InputDecoration(
-                                  labelText: 'Enlace del Canal, Usuario (@) o ID',
-                                  helperText: 'Pega tu usuario (ej. @MiCanal), el enlace de YouTube o el ID (UC...).',
-                                  hintText: 'https://youtube.com/@MiCanal',
+                                  labelText: 'Enlace del canal de YouTube',
+                                  helperText: 'Copia el enlace de tu canal desde YouTube y pégalo aquí.',
+                                  hintText: 'https://www.youtube.com/@MiCanal',
                                 ),
                               ),
                               const SizedBox(height: 16),

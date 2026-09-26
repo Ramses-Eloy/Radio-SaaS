@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/station.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
 import '../widgets/audio_visualizer.dart';
@@ -329,53 +330,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
                 const SizedBox(height: 25),
 
-                // Direct Contact Actions (WhatsApp Cabina & Llamar a Cabina)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        onPressed: () => _launchWhatsApp(context, currentStation.whatsappNumber),
-                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'WhatsApp Cabina', 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        onPressed: () => _launchPhoneCall(context, currentStation.phoneNumber),
-                        icon: const Icon(Icons.phone_in_talk, size: 16),
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Llamar a Cabina', 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildCabinaButtons(context, activeTheme, currentStation),
                 const SizedBox(height: 25),
 
                 // Nuestras Redes Header & Icons
+                if (currentStation.socialLinks.hasAny) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -398,41 +357,37 @@ class _PlayerScreenState extends State<PlayerScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
+                          if (currentStation.socialLinks.facebook.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.facebook,
                             label: 'Facebook',
                             color: const Color(0xFF1877F2),
-                            url: currentStation.socialLinks.facebook.isNotEmpty
-                                ? currentStation.socialLinks.facebook
-                                : 'https://facebook.com',
+                            url: currentStation.socialLinks.facebook,
                           ),
+                          if (currentStation.socialLinks.instagram.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.camera_alt,
                             label: 'Instagram',
                             color: const Color(0xFFE4405F),
-                            url: currentStation.socialLinks.instagram.isNotEmpty
-                                ? currentStation.socialLinks.instagram
-                                : 'https://instagram.com',
+                            url: currentStation.socialLinks.instagram,
                           ),
+                          if (currentStation.socialLinks.tiktok.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.music_note,
                             label: 'TikTok',
                             color: const Color(0xFF00F2FE),
-                            url: currentStation.socialLinks.tiktok.isNotEmpty
-                                ? currentStation.socialLinks.tiktok
-                                : 'https://tiktok.com',
+                            url: currentStation.socialLinks.tiktok,
                           ),
+                          if (currentStation.socialLinks.twitter.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.alternate_email,
                             label: 'Twitter / X',
                             color: const Color(0xFF1DA1F2),
-                            url: currentStation.socialLinks.twitter.isNotEmpty
-                                ? currentStation.socialLinks.twitter
-                                : 'https://x.com',
+                            url: currentStation.socialLinks.twitter,
                           ),
                         ],
                       ),
@@ -440,10 +395,90 @@ class _PlayerScreenState extends State<PlayerScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
+                ],
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Botones de cabina. Con 'AM/FM' y números distintos por banda, el botón
+  /// abre un selector AM/FM; si uno está vacío o se repite, usa el otro directo.
+  Widget _buildCabinaButtons(BuildContext context, ThemeConfig activeTheme, Station station) {
+    Map<String, String> porBanda(String am, String fm) {
+      if (station.band == 'AM/FM' && am.isNotEmpty && fm.isNotEmpty && am != fm) {
+        return {'AM': am, 'FM': fm};
+      }
+      return {'': fm.isEmpty ? am : fm};
+    }
+
+    final suffix = station.band.isEmpty || station.band == 'AM/FM' ? '' : ' ${station.band}';
+
+    return Row(
+      children: [
+        Expanded(
+          child: _cabinaButton(
+            const Color(0xFF25D366),
+            Icons.chat_bubble_outline,
+            'WhatsApp Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
+                (n) => _launchWhatsApp(context, n)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _cabinaButton(
+            activeTheme.primaryColor,
+            Icons.phone_in_talk,
+            'Llamar a Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
+                (n) => _launchPhoneCall(context, n)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Con una sola opción la abre directo; con AM y FM pregunta cuál.
+  Future<void> _elegirBanda(BuildContext context, Map<String, String> opciones, void Function(String) abrir) async {
+    if (opciones.length == 1) {
+      abrir(opciones.values.first);
+      return;
+    }
+    final numero = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final e in opciones.entries)
+              ListTile(
+                leading: const Icon(Icons.settings_input_antenna),
+                title: Text('Cabina ${e.key}'),
+                onTap: () => Navigator.pop(ctx, e.value),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (numero != null && context.mounted) abrir(numero);
+  }
+
+  Widget _cabinaButton(Color color, IconData icon, String label, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
       ),
     );
   }

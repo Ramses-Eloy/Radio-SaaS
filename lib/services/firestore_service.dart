@@ -42,6 +42,8 @@ class FirestoreService {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
+        final ocultas = List<String>.from(data['redes_ocultas'] ?? const []);
+        String red(String key, String field) => ocultas.contains(key) ? '' : (data[field] ?? '');
         return Station(
           id: doc.id,
           name: data['nombre'] ?? 'Emisora',
@@ -53,11 +55,14 @@ class FirestoreService {
           showSchedule: data['mostrar_programacion'] ?? true,
           whatsappNumber: data['social_whatsapp'] ?? '',
           phoneNumber: data['telefono_cabina'] ?? '',
+          band: data['banda'] ?? '',
+          whatsappNumberAm: data['social_whatsapp_am'] ?? '',
+          phoneNumberAm: data['telefono_cabina_am'] ?? '',
           socialLinks: SocialLinks(
-            facebook: data['social_facebook'] ?? '',
-            instagram: data['social_instagram'] ?? '',
-            twitter: data['social_x'] ?? '',
-            tiktok: data['social_tiktok'] ?? '',
+            facebook: red('facebook', 'social_facebook'),
+            instagram: red('instagram', 'social_instagram'),
+            twitter: red('x', 'social_x'),
+            tiktok: red('tiktok', 'social_tiktok'),
           ),
           lightTheme: ThemeConfig(
             primaryColorHex: data['color_hex'] ?? '#205CC6',
@@ -340,149 +345,5 @@ class FirestoreService {
       }
       return null;
     });
-  }
-
-  // Ensure initial tenant collections exist in Firestore
-  Future<void> ensureInitialDataSeeded(String appId) async {
-    try {
-      final marcaDoc = await _db.collection('marcas').doc(appId).get();
-      if (!marcaDoc.exists) {
-        if (appId == 'sira') {
-          await updateMarca(
-            appId: 'sira',
-            nombreGrupo: 'Grupo Sira Radio',
-            logoUrl: 'https://i.postimg.cc/gc4QKX0F/logo.png',
-            colorHex: '#35ACE5',
-            splashUrl: '',
-            bannerHomeUrl: '',
-            splashEnabled: true,
-            splashDurationSec: 5,
-          );
-          await _db.collection('marcas').doc('sira').set({'ownerEmail': 'isaacsarsanedas@gmail.com'}, SetOptions(merge: true));
-
-          await updateEmisora(
-            stationId: 'sira_1',
-            appId: 'sira',
-            nombre: 'Radio Reforma 860 AM',
-            logoUrl: 'https://i.postimg.cc/gc4QKX0F/logo.png',
-            colorHex: '#35ACE5',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8124/stream',
-            telefonoCabina: '9701033',
-            whatsapp: 'https://wa.me/6679-1708',
-            facebook: 'https://facebook.com',
-            instagram: 'https://instagram.com',
-            twitter: 'https://x.com',
-          );
-          await updateEmisora(
-            stationId: 'sira_2',
-            appId: 'sira',
-            nombre: 'Hola Panamá 103.1 FM',
-            logoUrl: 'https://i.postimg.cc/28RpbWC9/hola.png',
-            colorHex: '#205CC6',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8124/stream',
-            telefonoCabina: '9701033',
-            whatsapp: 'https://wa.me/6679-1708',
-            facebook: 'https://facebook.com',
-            instagram: 'https://instagram.com',
-            twitter: 'https://x.com',
-          );
-          await updateEmisora(
-            stationId: 'sira_3',
-            appId: 'sira',
-            nombre: 'SIRA Radio Digital',
-            logoUrl: 'https://i.postimg.cc/gc4QKX0F/logo.png',
-            colorHex: '#35ACE5',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8124/stream',
-            telefonoCabina: '9701033',
-            whatsapp: 'https://wa.me/6679-1708',
-            facebook: 'https://facebook.com',
-            instagram: 'https://instagram.com',
-            twitter: 'https://x.com',
-          );
-          await updateStreamingTv(
-            channelId: 'sira_live',
-            appId: 'sira',
-            nombre: 'Jurado del Pueblo TV',
-            urlVideo: 'https://www.youtube.com/live/C6aKV_ePz60',
-            logoUrl: 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-            mostrarProgramacion: true,
-          );
-        } else {
-          await updateMarca(
-            appId: 'erancon',
-            nombreGrupo: 'ERANCÓN',
-            logoUrl: 'https://i.postimg.cc/QMK6Fvfb/EMPORIO.png',
-            colorHex: '#5CE535',
-            splashUrl: '',
-            bannerHomeUrl: '',
-            splashEnabled: true,
-            splashDurationSec: 5,
-          );
-          await _db.collection('marcas').doc('erancon').set({'ownerEmail': 'ramses.11rsg@gmail.com'}, SetOptions(merge: true));
-
-          await updateEmisora(
-            stationId: 'erancon_1',
-            appId: 'erancon',
-            nombre: 'Fabulosa Estéreo 100.5',
-            logoUrl: 'https://i.postimg.cc/8P5kqbK1/file-000.png',
-            colorHex: '#FF3333',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8130/stream',
-            telefonoCabina: '2643773',
-            whatsapp: 'https://wa.me/6141-1005',
-            facebook: 'https://www.facebook.com/fabulosa1005',
-            instagram: 'https://www.instagram.com/fabulosa1005',
-            twitter: 'https://x.com/Fabulosa1005',
-          );
-          await updateEmisora(
-            stationId: 'erancon_2',
-            appId: 'erancon',
-            nombre: 'Emporio Radio 99.1',
-            logoUrl: 'https://i.postimg.cc/QMK6Fvfb/EMPORIO.png',
-            colorHex: '#5CE535',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8128/stream',
-            telefonoCabina: '2643773',
-            whatsapp: 'https://wa.me/6141-1005',
-            facebook: 'https://facebook.com',
-            instagram: 'https://instagram.com',
-            twitter: 'https://x.com',
-          );
-          await updateEmisora(
-            stationId: 'erancon_3',
-            appId: 'erancon',
-            nombre: 'Presidente 98.3 FM',
-            logoUrl: 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-            colorHex: '#35ACE5',
-            mostrarProgramacion: true,
-            urlAudio: 'https://www.streaming507.net:8128/stream',
-            telefonoCabina: '9701033',
-            whatsapp: 'https://wa.me/6679-1708',
-            facebook: 'https://facebook.com',
-            instagram: 'https://instagram.com',
-            twitter: 'https://x.com',
-          );
-          await updateStreamingTv(
-            channelId: 'erancon_live',
-            appId: 'erancon',
-            nombre: 'Fabulosa Streaming TV',
-            urlVideo: 'https://www.streaming507.net:2000/live',
-            logoUrl: 'https://i.postimg.cc/8P5kqbK1/file-000.png',
-            mostrarProgramacion: false,
-          );
-          await updateStreamingTv(
-            channelId: 'erancon_live2',
-            appId: 'erancon',
-            nombre: 'Jurado del Pueblo TV',
-            urlVideo: 'https://www.youtube.com/live/C6aKV_ePz60',
-            logoUrl: 'https://i.postimg.cc/NM9VLsVV/jurado.png',
-            mostrarProgramacion: true,
-          );
-        }
-      }
-    } catch (_) {}
   }
 }

@@ -22,6 +22,14 @@ abstract final class EmisoraFields {
   static const String socialInstagram = 'social_instagram';
   static const String socialFacebook = 'social_facebook';
   static const String socialX = 'social_x';
+  static const String socialTiktok = 'social_tiktok';
+  /// Banda de los botones de cabina: '', 'AM', 'FM' o 'AM/FM'.
+  /// Con 'AM/FM', telefono_cabina/social_whatsapp son los de FM y los *_am los de AM.
+  static const String banda = 'banda';
+  static const String telefonoCabinaAm = 'telefono_cabina_am';
+  static const String socialWhatsappAm = 'social_whatsapp_am';
+  /// Redes que la app no muestra aunque tengan enlace: 'facebook', 'instagram', 'x', 'tiktok'.
+  static const String redesOcultas = 'redes_ocultas';
   static const String telefonoCabina = 'telefono_cabina';
   static const String index = 'index';
   static const String appId = 'appId';
