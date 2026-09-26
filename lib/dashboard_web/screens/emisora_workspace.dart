@@ -431,6 +431,7 @@ class _ManagementTab extends StatelessWidget {
           controller: telefono,
           decoration: InputDecoration(
             labelText: 'Teléfono de Cabina$suffix',
+            helperText: suffix.isEmpty ? null : 'Si es el mismo en AM y FM, llénalo solo en una banda.',
             hintText: 'Ej. +507 970 1033',
             prefixIcon: const Icon(Icons.phone_in_talk_outlined),
           ),

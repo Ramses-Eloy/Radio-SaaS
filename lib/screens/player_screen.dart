@@ -330,19 +330,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
                 const SizedBox(height: 25),
 
-                // Botones de cabina: uno por banda si la emisora tiene AM y FM.
-                if (currentStation.band == 'AM/FM') ...[
-                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumberAm, currentStation.phoneNumberAm, ' AM'),
-                  const SizedBox(height: 8),
-                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumber, currentStation.phoneNumber, ' FM'),
-                ] else
-                  _buildCabinaRow(
-                    context,
-                    activeTheme,
-                    currentStation.whatsappNumber,
-                    currentStation.phoneNumber,
-                    currentStation.band.isEmpty ? '' : ' ${currentStation.band}',
-                  ),
+                _buildCabinaButtons(context, activeTheme, currentStation),
                 const SizedBox(height: 25),
 
                 // Nuestras Redes Header & Icons
@@ -416,49 +404,60 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  Widget _buildCabinaRow(BuildContext context, ThemeConfig activeTheme, String whatsapp, String phone, String suffix) {
-    return Row(
+  /// Botones de cabina. Con 'AM/FM', un número vacío o igual en ambas bandas
+  /// se muestra como un solo botón sin banda.
+  Widget _buildCabinaButtons(BuildContext context, ThemeConfig activeTheme, Station station) {
+    List<(String, String)> porBanda(String am, String fm) {
+      if (station.band != 'AM/FM') {
+        return [(station.band.isEmpty ? '' : ' ${station.band}', fm)];
+      }
+      if (am.isEmpty || fm.isEmpty || am == fm) return [('', fm.isEmpty ? am : fm)];
+      return [(' AM', am), (' FM', fm)];
+    }
+
+    final buttons = [
+      for (final (suffix, n) in porBanda(station.whatsappNumberAm, station.whatsappNumber))
+        _cabinaButton(const Color(0xFF25D366), Icons.chat_bubble_outline, 'WhatsApp Cabina$suffix',
+            () => _launchWhatsApp(context, n)),
+      for (final (suffix, n) in porBanda(station.phoneNumberAm, station.phoneNumber))
+        _cabinaButton(activeTheme.primaryColor, Icons.phone_in_talk, 'Llamar a Cabina$suffix',
+            () => _launchPhoneCall(context, n)),
+    ];
+
+    // Filas de dos botones; si sobra uno, ocupa la fila entera.
+    return Column(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            onPressed: () => _launchWhatsApp(context, whatsapp),
-            icon: const Icon(Icons.chat_bubble_outline, size: 16),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'WhatsApp Cabina$suffix',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
+        for (var i = 0; i < buttons.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
+            child: Row(
+              children: [
+                Expanded(child: buttons[i]),
+                if (i + 1 < buttons.length) ...[
+                  const SizedBox(width: 8),
+                  Expanded(child: buttons[i + 1]),
+                ],
+              ],
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: activeTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            onPressed: () => _launchPhoneCall(context, phone),
-            icon: const Icon(Icons.phone_in_talk, size: 16),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'Llamar a Cabina$suffix',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-            ),
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _cabinaButton(Color color, IconData icon, String label, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+      ),
     );
   }
 
