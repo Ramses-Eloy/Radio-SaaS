@@ -137,7 +137,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               height: 38,
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: ClipRRect(

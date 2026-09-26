@@ -118,7 +118,7 @@ class VideoStreamScreen extends StatelessWidget {
                                   borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                                   child: AppCachedImage(
                                     imageUrl: tv.imageUrl,
-                                    fit: BoxFit.contain,
+                                    fit: BoxFit.cover,
                                     fallbackIconSize: 48,
                                     fallbackIconColor: channelPrimary,
                                   ),
