@@ -41,6 +41,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
   final _x = TextEditingController();
   final _tiktok = TextEditingController();
   final _telefonoCabina = TextEditingController();
+  final _telefonoCabinaAm = TextEditingController();
+  final _whatsappAm = TextEditingController();
 
   bool _saving = false;
   bool _uploadingLogo = false;
@@ -81,6 +83,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
     _banda = const ['FM', 'AM', 'AM/FM'].contains(e.banda) ? e.banda : '';
     _redesOcultas = e.redesOcultas.toSet();
     _telefonoCabina.text = e.telefonoCabina;
+    _telefonoCabinaAm.text = e.telefonoCabinaAm;
+    _whatsappAm.text = e.socialWhatsappAm;
     _mostrarProgramacion = e.mostrarProgramacion;
   }
 
@@ -97,6 +101,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
     _x.dispose();
     _tiktok.dispose();
     _telefonoCabina.dispose();
+    _telefonoCabinaAm.dispose();
+    _whatsappAm.dispose();
     super.dispose();
   }
 
@@ -238,6 +244,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           EmisoraFields.banda: _banda,
           EmisoraFields.redesOcultas: _redesOcultas.toList(),
           EmisoraFields.telefonoCabina: _telefonoCabina.text.trim(),
+          EmisoraFields.telefonoCabinaAm: _telefonoCabinaAm.text.trim(),
+          EmisoraFields.socialWhatsappAm: _whatsappAm.text.trim(),
         },
         appId: widget.appId,
       );
@@ -259,6 +267,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           banda: _banda,
           redesOcultas: _redesOcultas.toList(),
           telefonoCabina: _telefonoCabina.text.trim(),
+          telefonoCabinaAm: _telefonoCabinaAm.text.trim(),
+          socialWhatsappAm: _whatsappAm.text.trim(),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -355,6 +365,8 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
               visible ? _redesOcultas.remove(red) : _redesOcultas.add(red);
             }),
             telefonoCabina: _telefonoCabina,
+            telefonoCabinaAm: _telefonoCabinaAm,
+            whatsappAm: _whatsappAm,
             onPickColor: _openColorPicker,
             onPickColorSecundario: _openColorSecundarioPicker,
             uploadingLogo: _uploadingLogo,
@@ -386,6 +398,8 @@ class _ManagementTab extends StatelessWidget {
     required this.redesOcultas,
     required this.onRedVisibleChanged,
     required this.telefonoCabina,
+    required this.telefonoCabinaAm,
+    required this.whatsappAm,
     required this.onPickColor,
     required this.onPickColorSecundario,
     required this.uploadingLogo,
@@ -410,6 +424,30 @@ class _ManagementTab extends StatelessWidget {
   final Set<String> redesOcultas;
   final void Function(String red, bool visible) onRedVisibleChanged;
 
+  Widget _cabinaFields(TextEditingController telefono, TextEditingController whatsapp, String suffix) {
+    return Column(
+      children: [
+        TextField(
+          controller: telefono,
+          decoration: InputDecoration(
+            labelText: 'Teléfono de Cabina$suffix',
+            hintText: 'Ej. +507 970 1033',
+            prefixIcon: const Icon(Icons.phone_in_talk_outlined),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: whatsapp,
+          decoration: InputDecoration(
+            labelText: 'WhatsApp Cabina$suffix',
+            helperText: 'Número o enlace. Recomendado: https://wa.me/…',
+            prefixIcon: const Icon(Icons.chat),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _redField(String red, TextEditingController controller, String label, String helper, IconData icon) {
     final visible = !redesOcultas.contains(red);
     return Row(
@@ -430,6 +468,8 @@ class _ManagementTab extends StatelessWidget {
     );
   }
   final TextEditingController telefonoCabina;
+  final TextEditingController telefonoCabinaAm;
+  final TextEditingController whatsappAm;
   final VoidCallback onPickColor;
   final VoidCallback onPickColorSecundario;
   final bool uploadingLogo;
@@ -466,23 +506,6 @@ class _ManagementTab extends StatelessWidget {
                     helperText: 'Este nombre se verá en la lista de estaciones en la app.',
                     hintText: 'Ej. Radio Costa FM',
                   ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  key: ValueKey(banda),
-                  initialValue: banda,
-                  decoration: const InputDecoration(
-                    labelText: 'Banda',
-                    helperText: 'Si tienes AM y FM con teléfonos distintos, crea una emisora por banda.',
-                    prefixIcon: Icon(Icons.settings_input_antenna),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '', child: Text('Sin indicar')),
-                    DropdownMenuItem(value: 'FM', child: Text('FM')),
-                    DropdownMenuItem(value: 'AM', child: Text('AM')),
-                    DropdownMenuItem(value: 'AM/FM', child: Text('AM y FM')),
-                  ],
-                  onChanged: (v) => onBandaChanged(v ?? ''),
                 ),
               ],
             ),
@@ -680,26 +703,31 @@ class _ManagementTab extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 18),
-                TextField(
-                  controller: telefonoCabina,
+                DropdownButtonFormField<String>(
+                  key: ValueKey(banda),
+                  initialValue: banda,
                   decoration: const InputDecoration(
-                    labelText: 'Teléfono de Cabina',
-                    helperText: 'Número de contacto de la cabina de esta emisora.',
-                    hintText: 'Ej. +34 600 000 000',
-                    prefixIcon: Icon(Icons.phone_in_talk_outlined),
+                    labelText: 'Banda de cabina',
+                    helperText: 'Con AM y FM la app muestra botones de cabina para cada banda.',
+                    prefixIcon: Icon(Icons.settings_input_antenna),
                   ),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('Sin indicar')),
+                    DropdownMenuItem(value: 'AM', child: Text('AM')),
+                    DropdownMenuItem(value: 'FM', child: Text('FM')),
+                    DropdownMenuItem(value: 'AM/FM', child: Text('AM y FM')),
+                  ],
+                  onChanged: (v) => onBandaChanged(v ?? ''),
                 ),
+                const SizedBox(height: 16),
+                if (banda == 'AM/FM') ...[
+                  _cabinaFields(telefonoCabinaAm, whatsappAm, ' AM'),
+                  const SizedBox(height: 16),
+                  _cabinaFields(telefonoCabina, whatsapp, ' FM'),
+                ] else
+                  _cabinaFields(telefonoCabina, whatsapp, banda.isEmpty ? '' : ' $banda'),
                 const SizedBox(height: 16),
                 _redField('facebook', facebook, 'Facebook', 'URL del perfil o página de Facebook.', Icons.facebook),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: whatsapp,
-                  decoration: const InputDecoration(
-                    labelText: 'WhatsApp',
-                    helperText: 'Número o enlace. Recomendado: https://wa.me/…',
-                    prefixIcon: Icon(Icons.chat),
-                  ),
-                ),
                 const SizedBox(height: 16),
                 _redField('instagram', instagram, 'Instagram', 'URL del perfil de Instagram.', Icons.camera_alt_outlined),
                 const SizedBox(height: 16),

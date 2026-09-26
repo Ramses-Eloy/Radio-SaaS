@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/station.dart';
 import '../providers/station_provider.dart';
 import '../providers/audio_provider.dart';
 import '../widgets/audio_visualizer.dart';
@@ -143,7 +144,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                currentStation.displayName,
+                currentStation.name,
                 style: TextStyle(
                   color: activeTheme.primaryColor,
                   fontWeight: FontWeight.bold,
@@ -329,50 +330,19 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
                 const SizedBox(height: 25),
 
-                // Direct Contact Actions (WhatsApp Cabina & Llamar a Cabina)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        onPressed: () => _launchWhatsApp(context, currentStation.whatsappNumber),
-                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'WhatsApp Cabina', 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: activeTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                        onPressed: () => _launchPhoneCall(context, currentStation.phoneNumber),
-                        icon: const Icon(Icons.phone_in_talk, size: 16),
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'Llamar a Cabina', 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // Botones de cabina: uno por banda si la emisora tiene AM y FM.
+                if (currentStation.band == 'AM/FM') ...[
+                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumberAm, currentStation.phoneNumberAm, ' AM'),
+                  const SizedBox(height: 8),
+                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumber, currentStation.phoneNumber, ' FM'),
+                ] else
+                  _buildCabinaRow(
+                    context,
+                    activeTheme,
+                    currentStation.whatsappNumber,
+                    currentStation.phoneNumber,
+                    currentStation.band.isEmpty ? '' : ' ${currentStation.band}',
+                  ),
                 const SizedBox(height: 25),
 
                 // Nuestras Redes Header & Icons
@@ -443,6 +413,52 @@ class _PlayerScreenState extends State<PlayerScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCabinaRow(BuildContext context, ThemeConfig activeTheme, String whatsapp, String phone, String suffix) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            onPressed: () => _launchWhatsApp(context, whatsapp),
+            icon: const Icon(Icons.chat_bubble_outline, size: 16),
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'WhatsApp Cabina$suffix',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: activeTheme.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            onPressed: () => _launchPhoneCall(context, phone),
+            icon: const Icon(Icons.phone_in_talk, size: 16),
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Llamar a Cabina$suffix',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

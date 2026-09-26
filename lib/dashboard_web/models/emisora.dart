@@ -21,6 +21,8 @@ class Emisora {
     required this.socialX,
     this.socialTiktok = '',
     this.banda = '',
+    this.telefonoCabinaAm = '',
+    this.socialWhatsappAm = '',
     this.redesOcultas = const [],
     required this.telefonoCabina,
     required this.currentListeners,
@@ -45,6 +47,8 @@ class Emisora {
   final String socialX;
   final String socialTiktok;
   final String banda;
+  final String telefonoCabinaAm;
+  final String socialWhatsappAm;
   final List<String> redesOcultas;
   final String telefonoCabina;
   final int currentListeners;
@@ -77,6 +81,8 @@ class Emisora {
       socialX: d[EmisoraFields.socialX] as String? ?? d['social_twitter'] as String? ?? '',
       socialTiktok: d[EmisoraFields.socialTiktok] as String? ?? '',
       banda: d[EmisoraFields.banda] as String? ?? '',
+      telefonoCabinaAm: d[EmisoraFields.telefonoCabinaAm] as String? ?? '',
+      socialWhatsappAm: d[EmisoraFields.socialWhatsappAm] as String? ?? '',
       redesOcultas: List<String>.from(d[EmisoraFields.redesOcultas] as List? ?? const []),
       telefonoCabina: d[EmisoraFields.telefonoCabina] as String? ?? '',
       currentListeners: (stats['currentListeners'] as num?)?.toInt() ?? 0,
@@ -103,6 +109,8 @@ class Emisora {
         'socialX': socialX,
         'socialTiktok': socialTiktok,
         'banda': banda,
+        'telefonoCabinaAm': telefonoCabinaAm,
+        'socialWhatsappAm': socialWhatsappAm,
         'redesOcultas': redesOcultas,
         'telefonoCabina': telefonoCabina,
         'currentListeners': currentListeners,
@@ -129,6 +137,8 @@ class Emisora {
       socialX: json['socialX'] as String? ?? '',
       socialTiktok: json['socialTiktok'] as String? ?? '',
       banda: json['banda'] as String? ?? '',
+      telefonoCabinaAm: json['telefonoCabinaAm'] as String? ?? '',
+      socialWhatsappAm: json['socialWhatsappAm'] as String? ?? '',
       redesOcultas: List<String>.from(json['redesOcultas'] as List? ?? const []),
       telefonoCabina: json['telefonoCabina'] as String? ?? '',
       currentListeners: (json['currentListeners'] as num?)?.toInt() ?? 0,
@@ -155,6 +165,8 @@ class Emisora {
     String? socialX,
     String? socialTiktok,
     String? banda,
+    String? telefonoCabinaAm,
+    String? socialWhatsappAm,
     List<String>? redesOcultas,
     String? telefonoCabina,
     int? currentListeners,
@@ -179,6 +191,8 @@ class Emisora {
       socialX: socialX ?? this.socialX,
       socialTiktok: socialTiktok ?? this.socialTiktok,
       banda: banda ?? this.banda,
+      telefonoCabinaAm: telefonoCabinaAm ?? this.telefonoCabinaAm,
+      socialWhatsappAm: socialWhatsappAm ?? this.socialWhatsappAm,
       redesOcultas: redesOcultas ?? this.redesOcultas,
       telefonoCabina: telefonoCabina ?? this.telefonoCabina,
       currentListeners: currentListeners ?? this.currentListeners,
