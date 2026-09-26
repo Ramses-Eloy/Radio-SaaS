@@ -330,19 +330,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
                 const SizedBox(height: 25),
 
-                // Botones de cabina: uno por banda si la emisora tiene AM y FM.
-                if (currentStation.band == 'AM/FM') ...[
-                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumberAm, currentStation.phoneNumberAm, ' AM'),
-                  const SizedBox(height: 8),
-                  _buildCabinaRow(context, activeTheme, currentStation.whatsappNumber, currentStation.phoneNumber, ' FM'),
-                ] else
-                  _buildCabinaRow(
-                    context,
-                    activeTheme,
-                    currentStation.whatsappNumber,
-                    currentStation.phoneNumber,
-                    currentStation.band.isEmpty ? '' : ' ${currentStation.band}',
-                  ),
+                _buildCabinaButtons(context, activeTheme, currentStation),
                 const SizedBox(height: 25),
 
                 // Nuestras Redes Header & Icons
@@ -416,49 +404,82 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  Widget _buildCabinaRow(BuildContext context, ThemeConfig activeTheme, String whatsapp, String phone, String suffix) {
+  /// Botones de cabina. Con 'AM/FM' y números distintos por banda, el botón
+  /// abre un selector AM/FM; si uno está vacío o se repite, usa el otro directo.
+  Widget _buildCabinaButtons(BuildContext context, ThemeConfig activeTheme, Station station) {
+    Map<String, String> porBanda(String am, String fm) {
+      if (station.band == 'AM/FM' && am.isNotEmpty && fm.isNotEmpty && am != fm) {
+        return {'AM': am, 'FM': fm};
+      }
+      return {'': fm.isEmpty ? am : fm};
+    }
+
+    final suffix = station.band.isEmpty || station.band == 'AM/FM' ? '' : ' ${station.band}';
+
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            onPressed: () => _launchWhatsApp(context, whatsapp),
-            icon: const Icon(Icons.chat_bubble_outline, size: 16),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'WhatsApp Cabina$suffix',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-            ),
+          child: _cabinaButton(
+            const Color(0xFF25D366),
+            Icons.chat_bubble_outline,
+            'WhatsApp Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
+                (n) => _launchWhatsApp(context, n)),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: activeTheme.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            onPressed: () => _launchPhoneCall(context, phone),
-            icon: const Icon(Icons.phone_in_talk, size: 16),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'Llamar a Cabina$suffix',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-            ),
+          child: _cabinaButton(
+            activeTheme.primaryColor,
+            Icons.phone_in_talk,
+            'Llamar a Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
+                (n) => _launchPhoneCall(context, n)),
           ),
         ),
       ],
+    );
+  }
+
+  /// Con una sola opción la abre directo; con AM y FM pregunta cuál.
+  Future<void> _elegirBanda(BuildContext context, Map<String, String> opciones, void Function(String) abrir) async {
+    if (opciones.length == 1) {
+      abrir(opciones.values.first);
+      return;
+    }
+    final numero = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final e in opciones.entries)
+              ListTile(
+                leading: const Icon(Icons.settings_input_antenna),
+                title: Text('Cabina ${e.key}'),
+                onTap: () => Navigator.pop(ctx, e.value),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (numero != null && context.mounted) abrir(numero);
+  }
+
+  Widget _cabinaButton(Color color, IconData icon, String label, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+      ),
     );
   }
 

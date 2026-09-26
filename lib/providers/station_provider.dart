@@ -30,7 +30,7 @@ class StationProvider extends ChangeNotifier {
   String _brandName = 'ERANCÓN';
   String _brandEmail = '';
   String _brandLogoUrl = 'https://i.postimg.cc/QMK6Fvfb/EMPORIO.png';
-  String _radioLabel = 'En Vivo';
+  String _radioLabel = 'Radio';
   String _tvLabel = 'Video Live';
   String _brandBannerHomeUrl = '';
   String _splashUrl = '';
