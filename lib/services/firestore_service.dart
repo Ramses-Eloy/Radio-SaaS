@@ -43,6 +43,8 @@ class FirestoreService {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
+        final ocultas = List<String>.from(data['redes_ocultas'] ?? const []);
+        String red(String key, String field) => ocultas.contains(key) ? '' : (data[field] ?? '');
         return Station(
           id: doc.id,
           name: data['nombre'] ?? 'Emisora',
@@ -54,11 +56,12 @@ class FirestoreService {
           showSchedule: data['mostrar_programacion'] ?? true,
           whatsappNumber: data['social_whatsapp'] ?? '',
           phoneNumber: data['telefono_cabina'] ?? '',
+          band: data['banda'] ?? '',
           socialLinks: SocialLinks(
-            facebook: data['social_facebook'] ?? '',
-            instagram: data['social_instagram'] ?? '',
-            twitter: data['social_x'] ?? '',
-            tiktok: data['social_tiktok'] ?? '',
+            facebook: red('facebook', 'social_facebook'),
+            instagram: red('instagram', 'social_instagram'),
+            twitter: red('x', 'social_x'),
+            tiktok: red('tiktok', 'social_tiktok'),
           ),
           lightTheme: ThemeConfig(
             primaryColorHex: data['color_hex'] ?? '#205CC6',

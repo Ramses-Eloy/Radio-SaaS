@@ -86,7 +86,7 @@ class StationSwitcher extends StatelessWidget {
               },
               child: _StationCard(
                 imageUrl: station.logoUrl,
-                name: station.name,
+                name: station.displayName,
                 isSelected: isSelected,
                 isLive: station.isLive,
                 isTv: false,

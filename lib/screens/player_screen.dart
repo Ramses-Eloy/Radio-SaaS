@@ -143,7 +143,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                currentStation.name,
+                currentStation.displayName,
                 style: TextStyle(
                   color: activeTheme.primaryColor,
                   fontWeight: FontWeight.bold,
@@ -376,6 +376,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                 const SizedBox(height: 25),
 
                 // Nuestras Redes Header & Icons
+                if (currentStation.socialLinks.hasAny) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -398,41 +399,37 @@ class _PlayerScreenState extends State<PlayerScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
+                          if (currentStation.socialLinks.facebook.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.facebook,
                             label: 'Facebook',
                             color: const Color(0xFF1877F2),
-                            url: currentStation.socialLinks.facebook.isNotEmpty
-                                ? currentStation.socialLinks.facebook
-                                : 'https://facebook.com',
+                            url: currentStation.socialLinks.facebook,
                           ),
+                          if (currentStation.socialLinks.instagram.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.camera_alt,
                             label: 'Instagram',
                             color: const Color(0xFFE4405F),
-                            url: currentStation.socialLinks.instagram.isNotEmpty
-                                ? currentStation.socialLinks.instagram
-                                : 'https://instagram.com',
+                            url: currentStation.socialLinks.instagram,
                           ),
+                          if (currentStation.socialLinks.tiktok.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.music_note,
                             label: 'TikTok',
                             color: const Color(0xFF00F2FE),
-                            url: currentStation.socialLinks.tiktok.isNotEmpty
-                                ? currentStation.socialLinks.tiktok
-                                : 'https://tiktok.com',
+                            url: currentStation.socialLinks.tiktok,
                           ),
+                          if (currentStation.socialLinks.twitter.isNotEmpty)
                           _buildSocialItem(
                             context,
                             icon: Icons.alternate_email,
                             label: 'Twitter / X',
                             color: const Color(0xFF1DA1F2),
-                            url: currentStation.socialLinks.twitter.isNotEmpty
-                                ? currentStation.socialLinks.twitter
-                                : 'https://x.com',
+                            url: currentStation.socialLinks.twitter,
                           ),
                         ],
                       ),
@@ -440,6 +437,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
+                ],
               ],
             ),
           ),

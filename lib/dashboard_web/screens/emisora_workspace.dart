@@ -39,11 +39,14 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
   final _whatsapp = TextEditingController();
   final _instagram = TextEditingController();
   final _x = TextEditingController();
+  final _tiktok = TextEditingController();
   final _telefonoCabina = TextEditingController();
 
   bool _saving = false;
   bool _uploadingLogo = false;
   bool _mostrarProgramacion = true;
+  String _banda = '';
+  Set<String> _redesOcultas = {};
 
   final BrandStorageService _brandStorage = BrandStorageService();
 
@@ -74,6 +77,9 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
     _whatsapp.text = e.socialWhatsapp;
     _instagram.text = e.socialInstagram;
     _x.text = e.socialX;
+    _tiktok.text = e.socialTiktok;
+    _banda = const ['FM', 'AM', 'AM/FM'].contains(e.banda) ? e.banda : '';
+    _redesOcultas = e.redesOcultas.toSet();
     _telefonoCabina.text = e.telefonoCabina;
     _mostrarProgramacion = e.mostrarProgramacion;
   }
@@ -89,6 +95,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
     _whatsapp.dispose();
     _instagram.dispose();
     _x.dispose();
+    _tiktok.dispose();
     _telefonoCabina.dispose();
     super.dispose();
   }
@@ -227,6 +234,9 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           EmisoraFields.socialWhatsapp: _whatsapp.text.trim(),
           EmisoraFields.socialInstagram: _instagram.text.trim(),
           EmisoraFields.socialX: _x.text.trim(),
+          EmisoraFields.socialTiktok: _tiktok.text.trim(),
+          EmisoraFields.banda: _banda,
+          EmisoraFields.redesOcultas: _redesOcultas.toList(),
           EmisoraFields.telefonoCabina: _telefonoCabina.text.trim(),
         },
         appId: widget.appId,
@@ -245,6 +255,9 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
           socialWhatsapp: _whatsapp.text.trim(),
           socialInstagram: _instagram.text.trim(),
           socialX: _x.text.trim(),
+          socialTiktok: _tiktok.text.trim(),
+          banda: _banda,
+          redesOcultas: _redesOcultas.toList(),
           telefonoCabina: _telefonoCabina.text.trim(),
         ),
       );
@@ -333,6 +346,13 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
             whatsapp: _whatsapp,
             instagram: _instagram,
             x: _x,
+            tiktok: _tiktok,
+            banda: _banda,
+            onBandaChanged: (v) => setState(() => _banda = v),
+            redesOcultas: _redesOcultas,
+            onRedVisibleChanged: (red, visible) => setState(() {
+              visible ? _redesOcultas.remove(red) : _redesOcultas.add(red);
+            }),
             telefonoCabina: _telefonoCabina,
             onPickColor: _openColorPicker,
             onPickColorSecundario: _openColorSecundarioPicker,
@@ -358,6 +378,11 @@ class _ManagementTab extends StatelessWidget {
     required this.whatsapp,
     required this.instagram,
     required this.x,
+    required this.tiktok,
+    required this.banda,
+    required this.onBandaChanged,
+    required this.redesOcultas,
+    required this.onRedVisibleChanged,
     required this.telefonoCabina,
     required this.onPickColor,
     required this.onPickColorSecundario,
@@ -376,6 +401,31 @@ class _ManagementTab extends StatelessWidget {
   final TextEditingController whatsapp;
   final TextEditingController instagram;
   final TextEditingController x;
+  final TextEditingController tiktok;
+  final String banda;
+  final ValueChanged<String> onBandaChanged;
+  final Set<String> redesOcultas;
+  final void Function(String red, bool visible) onRedVisibleChanged;
+
+  Widget _redField(String red, TextEditingController controller, String label, String helper, IconData icon) {
+    final visible = !redesOcultas.contains(red);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: label, helperText: helper, prefixIcon: Icon(icon)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Tooltip(
+          message: visible ? 'Visible en la app' : 'Oculta en la app',
+          child: Checkbox(value: visible, onChanged: (v) => onRedVisibleChanged(red, v ?? true)),
+        ),
+      ],
+    );
+  }
   final TextEditingController telefonoCabina;
   final VoidCallback onPickColor;
   final VoidCallback onPickColorSecundario;
@@ -413,6 +463,23 @@ class _ManagementTab extends StatelessWidget {
                     helperText: 'Este nombre se verá en la lista de estaciones en la app.',
                     hintText: 'Ej. Radio Costa FM',
                   ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  key: ValueKey(banda),
+                  initialValue: banda,
+                  decoration: const InputDecoration(
+                    labelText: 'Banda',
+                    helperText: 'Si tienes AM y FM con teléfonos distintos, crea una emisora por banda.',
+                    prefixIcon: Icon(Icons.settings_input_antenna),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('Sin indicar')),
+                    DropdownMenuItem(value: 'FM', child: Text('FM')),
+                    DropdownMenuItem(value: 'AM', child: Text('AM')),
+                    DropdownMenuItem(value: 'AM/FM', child: Text('AM y FM')),
+                  ],
+                  onChanged: (v) => onBandaChanged(v ?? ''),
                 ),
               ],
             ),
@@ -604,7 +671,7 @@ class _ManagementTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Pega enlaces completos para que funcionen al tocar en la app.',
+                  'Pega enlaces completos. Desmarca la casilla para ocultar una red; las redes sin enlace no aparecen en la app.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 18),
@@ -618,14 +685,7 @@ class _ManagementTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: facebook,
-                  decoration: const InputDecoration(
-                    labelText: 'Facebook',
-                    helperText: 'URL del perfil o página de Facebook.',
-                    prefixIcon: Icon(Icons.facebook),
-                  ),
-                ),
+                _redField('facebook', facebook, 'Facebook', 'URL del perfil o página de Facebook.', Icons.facebook),
                 const SizedBox(height: 16),
                 TextField(
                   controller: whatsapp,
@@ -636,23 +696,11 @@ class _ManagementTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: instagram,
-                  decoration: const InputDecoration(
-                    labelText: 'Instagram',
-                    helperText: 'URL del perfil de Instagram.',
-                    prefixIcon: Icon(Icons.camera_alt_outlined),
-                  ),
-                ),
+                _redField('instagram', instagram, 'Instagram', 'URL del perfil de Instagram.', Icons.camera_alt_outlined),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: x,
-                  decoration: const InputDecoration(
-                    labelText: 'X',
-                    helperText: 'URL del perfil de X (Twitter).',
-                    prefixIcon: Icon(Icons.tag),
-                  ),
-                ),
+                _redField('x', x, 'X', 'URL del perfil de X (Twitter).', Icons.tag),
+                const SizedBox(height: 16),
+                _redField('tiktok', tiktok, 'TikTok', 'URL del perfil de TikTok.', Icons.music_note_outlined),
               ],
             ),
           ),

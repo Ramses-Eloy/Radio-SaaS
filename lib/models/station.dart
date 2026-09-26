@@ -59,6 +59,9 @@ class SocialLinks {
     this.twitter = '',
   });
 
+  bool get hasAny =>
+      instagram.isNotEmpty || facebook.isNotEmpty || tiktok.isNotEmpty || twitter.isNotEmpty;
+
   factory SocialLinks.fromJson(Map<String, dynamic> json) {
     return SocialLinks(
       instagram: json['instagram'] ?? '',
@@ -87,6 +90,8 @@ class Station {
   final bool showSchedule;
   final String whatsappNumber;
   final String phoneNumber;
+  /// 'FM', 'AM', 'AM/FM' o '' (sin indicar).
+  final String band;
   final SocialLinks socialLinks;
   final ThemeConfig lightTheme;
   final ThemeConfig darkTheme;
@@ -102,6 +107,7 @@ class Station {
     this.showSchedule = true,
     required this.whatsappNumber,
     required this.phoneNumber,
+    this.band = '',
     required this.socialLinks,
     required this.lightTheme,
     required this.darkTheme,
@@ -119,6 +125,7 @@ class Station {
       showSchedule: json['showSchedule'] ?? true,
       whatsappNumber: json['whatsappNumber'] ?? 'https://wa.me/6679-1708',
       phoneNumber: json['phoneNumber'] ?? '9701033',
+      band: json['band'] ?? '',
       socialLinks: SocialLinks.fromJson(json['socialLinks'] ?? {}),
       lightTheme: ThemeConfig.fromJson(json['lightTheme'] ?? {
         'primaryColorHex': '#205CC6',
@@ -146,6 +153,7 @@ class Station {
         'showSchedule': showSchedule,
         'whatsappNumber': whatsappNumber,
         'phoneNumber': phoneNumber,
+        'band': band,
         'socialLinks': socialLinks.toJson(),
         'lightTheme': lightTheme.toJson(),
         'darkTheme': darkTheme.toJson(),
@@ -162,6 +170,7 @@ class Station {
     bool? showSchedule,
     String? whatsappNumber,
     String? phoneNumber,
+    String? band,
     SocialLinks? socialLinks,
     ThemeConfig? lightTheme,
     ThemeConfig? darkTheme,
@@ -177,9 +186,14 @@ class Station {
       showSchedule: showSchedule ?? this.showSchedule,
       whatsappNumber: whatsappNumber ?? this.whatsappNumber,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      band: band ?? this.band,
       socialLinks: socialLinks ?? this.socialLinks,
       lightTheme: lightTheme ?? this.lightTheme,
       darkTheme: darkTheme ?? this.darkTheme,
     );
   }
+
+  /// Nombre con la banda, salvo que el nombre ya la incluya.
+  String get displayName =>
+      band.isEmpty || name.toUpperCase().contains(band) ? name : '$name $band';
 }
