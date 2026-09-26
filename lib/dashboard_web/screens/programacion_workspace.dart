@@ -7,6 +7,7 @@ import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart'
 import 'package:radio_whitelabel/dashboard_web/utils/programacion_horario_format.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/programacion_row_codec.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/tenant_scope.dart';
+import 'package:radio_whitelabel/dashboard_web/widgets/programacion_import_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProgramacionWorkspace extends StatefulWidget {
@@ -273,6 +274,33 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
         }
       }
     });
+  }
+
+  Future<void> _openImportDialog() async {
+    final imported = await ProgramacionImportDialog.show(
+      context,
+      defaultDay: _dayConfigs[_tabController.index].key,
+      dayLabels: {for (final d in _dayConfigs) d.key: d.label},
+    );
+    if (imported == null || !mounted) return;
+    setState(() {
+      for (final entry in imported.result.byDay.entries) {
+        final existing = _rowsByDay[entry.key]!;
+        final newRows = entry.value
+            .map((r) => _RowControllers.fromHorarioString(h: r.h, p: r.p, t: r.t))
+            .toList();
+        final keep = imported.replace ? <_RowControllers>[] : existing.where((r) => !r.isEmpty).toList();
+        _disposeRows(existing.where((r) => !keep.contains(r)).toList());
+        _rowsByDay[entry.key] = [...keep, ...newRows];
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Se importaron ${imported.result.total} bloques. Revísalos y pulsa "Guardar Cambios".',
+        ),
+      ),
+    );
   }
 
   Future<void> _pickTime(BuildContext context, _RowControllers row, {required bool isStart}) async {
@@ -780,6 +808,12 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
                                     Row(
                                       children: [
                                         OutlinedButton.icon(
+                                          onPressed: _openImportDialog,
+                                          icon: Icon(Icons.upload_file, size: 18, color: scheme.primary),
+                                          label: const Text('Importar'),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        OutlinedButton.icon(
                                           onPressed: () {
                                             final currentDay = _dayConfigs[_tabController.index];
                                             _openCopyDialog(currentDay.key, currentDay.label);
@@ -888,6 +922,9 @@ class _RowControllers {
         start: startTime,
         end: endTime,
       );
+
+  bool get isEmpty =>
+      startTime == null && endTime == null && pCtrl.text.trim().isEmpty && tCtrl.text.trim().isEmpty;
 
   void clear() {
     startTime = null;
