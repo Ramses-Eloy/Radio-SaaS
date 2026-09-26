@@ -59,7 +59,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       await _audioPlayer.setAudioSource(
         AudioSource.uri(
-          Uri.parse(streamUrl),
+          Uri.parse(streamUrl.trim()),
           tag: MediaItem(
             id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
             album: stationName,
@@ -103,19 +103,25 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
         } catch (_) {}
       }
 
-      await _audioPlayer.stop(); // Stop before changing source to force notification refresh
-      await _audioPlayer.setAudioSource(
-        AudioSource.uri(
-          Uri.parse(streamUrl),
-          tag: MediaItem(
-            id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
-            album: stationName,
-            title: displayTitle,
-            artist: displaySub,
-            artUri: artUri,
-          ),
+      final source = AudioSource.uri(
+        Uri.parse(streamUrl.trim()),
+        tag: MediaItem(
+          id: '${stationId}_${DateTime.now().millisecondsSinceEpoch}',
+          album: stationName,
+          title: displayTitle,
+          artist: displaySub,
+          artUri: artUri,
         ),
       );
+      await _audioPlayer.stop(); // Stop before changing source to force notification refresh
+      try {
+        await _audioPlayer.setAudioSource(source);
+      } on PlayerException {
+        // Algunos servidores devuelven a veces una redirección sin esquema
+        // (MalformedURLException en Android). Un segundo intento suele entrar.
+        await Future.delayed(const Duration(milliseconds: 500));
+        await _audioPlayer.setAudioSource(source);
+      }
       await _audioPlayer.play();
 
       TelemetryService().logEvent(
