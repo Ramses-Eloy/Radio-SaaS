@@ -9,7 +9,6 @@ class FirestoreService {
   // Resolve `appId` in `marcas` collection for logged-in user `ownerEmail`
   Future<String?> resolveAppIdForOwner(String ownerEmail) async {
     final normalized = ownerEmail.trim().toLowerCase();
-    if (normalized == 'isaacsarsanedas@gmail.com') return 'sira';
     if (normalized == 'ramses.11rsg@gmail.com') return 'erancon';
     try {
       final snap = await _db

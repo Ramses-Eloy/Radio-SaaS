@@ -42,6 +42,44 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310808715575:android:9236f2b37fe03e766f3ab2",
+        "android_client_info": {
+          "package_name": "org.radioveraguas.radio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW0nQtxz_vfrdTLTOZxzenuXR_dtngPPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310808715575:android:13fd98f41599f0846f3ab2",
+        "android_client_info": {
+          "package_name": "com.frecuenciasasociadas.radio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBW0nQtxz_vfrdTLTOZxzenuXR_dtngPPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
