@@ -839,14 +839,14 @@ class _ManagementTab extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 1600),
           child: isDesktop
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 13, child: leftColumn),
+                    Expanded(flex: 3, child: leftColumn),
                     const SizedBox(width: 32),
-                    Expanded(flex: 10, child: rightColumn),
+                    Expanded(flex: 2, child: rightColumn),
                   ],
                 )
               : Column(

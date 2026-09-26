@@ -335,7 +335,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
           sliver: SliverToBoxAdapter(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1600),
                 child: isDesktop
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +406,10 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                     hintText: 'Ej. ¡Escucha nuestra radio! Descarga la app aquí:',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.share),
+                    alignLabelWithHint: true,
                   ),
+                  minLines: 2,
+                  maxLines: 4,
                   maxLength: 150,
                 ),
                 const SizedBox(height: 24),
@@ -577,8 +580,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                   uploadButtonLabel: 'Subir Splash',
                   uploadingLabel: 'Subiendo splash…',
                   emptyPreviewText: 'Aún no hay splash. Sube una imagen para previsualizarla.',
-                  previewHeight: 80,
-                  previewFit: BoxFit.cover,
+                  previewHeight: 140,
                   icon: Icons.fullscreen_outlined,
                 ),
                 const SizedBox(height: 24),
@@ -599,8 +601,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                   uploadButtonLabel: 'Subir Banner',
                   uploadingLabel: 'Subiendo banner…',
                   emptyPreviewText: 'Aún no hay banner. Sube una imagen para previsualizarla.',
-                  previewHeight: 56,
-                  previewFit: BoxFit.cover,
+                  previewHeight: 64,
                   icon: Icons.view_day_outlined,
                 ),
                 const SizedBox(height: 16),
