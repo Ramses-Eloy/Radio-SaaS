@@ -25,6 +25,8 @@ abstract final class EmisoraFields {
   static const String socialTiktok = 'social_tiktok';
   /// Banda de la emisora: 'FM', 'AM', 'AM/FM' o '' (sin indicar).
   static const String banda = 'banda';
+  /// Redes que la app no muestra aunque tengan enlace: 'facebook', 'instagram', 'x', 'tiktok'.
+  static const String redesOcultas = 'redes_ocultas';
   static const String telefonoCabina = 'telefono_cabina';
   static const String index = 'index';
   static const String appId = 'appId';

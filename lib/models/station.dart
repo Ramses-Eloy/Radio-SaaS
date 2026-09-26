@@ -59,6 +59,9 @@ class SocialLinks {
     this.twitter = '',
   });
 
+  bool get hasAny =>
+      instagram.isNotEmpty || facebook.isNotEmpty || tiktok.isNotEmpty || twitter.isNotEmpty;
+
   factory SocialLinks.fromJson(Map<String, dynamic> json) {
     return SocialLinks(
       instagram: json['instagram'] ?? '',
