@@ -819,7 +819,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                 sliver: SliverToBoxAdapter(
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1400),
+                      constraints: const BoxConstraints(maxWidth: 1600),
                       child: Flex(
                         direction: isMobile ? Axis.vertical : Axis.horizontal,
                         crossAxisAlignment: CrossAxisAlignment.start,

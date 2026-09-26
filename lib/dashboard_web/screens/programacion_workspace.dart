@@ -660,7 +660,7 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
               sliver: SliverToBoxAdapter(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1400),
+                    constraints: const BoxConstraints(maxWidth: 1600),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

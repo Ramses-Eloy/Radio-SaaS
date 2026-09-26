@@ -314,7 +314,7 @@ class _StreamingWorkspaceState extends State<StreamingWorkspace> {
           sliver: SliverToBoxAdapter(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 1600),
                 child: isDesktop
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
