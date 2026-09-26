@@ -71,11 +71,6 @@ android {
             applicationId = "com.gruposira.radio"
             resValue("string", "app_name", "GRUPO SIRA")
         }
-        create("fa") {
-            dimension = "default"
-            applicationId = "com.frecuenciasasociadas.radio"
-            resValue("string", "app_name", "FA 360")
-        }
         create("rveraguas") {
             dimension = "default"
             applicationId = "org.radioveraguas.radio"
