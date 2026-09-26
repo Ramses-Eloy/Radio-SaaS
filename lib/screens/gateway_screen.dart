@@ -191,8 +191,9 @@ class _GatewayScreenState extends State<GatewayScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _startTimer();
                 });
-                // Completo de arriba a abajo; en pantallas más anchas se
-                // recortan los lados.
+                // Completo de arriba a abajo (fitHeight), centrado. En pantallas
+                // más alargadas que 9:16 se recortan solo los lados; por eso la
+                // guía pide dejar margen lateral libre.
                 return Image(image: imageProvider, fit: BoxFit.fitHeight);
               },
               errorWidget: (context, url, error) {
