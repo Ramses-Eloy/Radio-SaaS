@@ -340,6 +340,7 @@ class _EmisoraWorkspaceState extends State<EmisoraWorkspace> {
             hex: _hex,
             hexSecundario: _hexSecundario,
             logoUrl: _logoUrl,
+            showSchedule: widget.dataStore.features.enableSchedule,
             mostrarProgramacion: _mostrarProgramacion,
             onMostrarProgramacionChanged: (v) => setState(() => _mostrarProgramacion = v),
             facebook: _facebook,
@@ -372,6 +373,7 @@ class _ManagementTab extends StatelessWidget {
     required this.hex,
     required this.hexSecundario,
     required this.logoUrl,
+    required this.showSchedule,
     required this.mostrarProgramacion,
     required this.onMostrarProgramacionChanged,
     required this.facebook,
@@ -395,6 +397,7 @@ class _ManagementTab extends StatelessWidget {
   final TextEditingController hex;
   final TextEditingController hexSecundario;
   final TextEditingController logoUrl;
+  final bool showSchedule;
   final bool mostrarProgramacion;
   final ValueChanged<bool> onMostrarProgramacionChanged;
   final TextEditingController facebook;
@@ -597,37 +600,39 @@ class _ManagementTab extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Programación',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Controla si la app muestra la sección de horarios para esta emisora.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Mostrar sección de programación'),
-                  subtitle: Text(
-                    mostrarProgramacion ? 'Visible' : 'Oculta',
-                    style: TextStyle(color: scheme.onSurfaceVariant),
+        if (showSchedule) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Programación',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                  value: mostrarProgramacion,
-                  onChanged: onMostrarProgramacionChanged,
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    'Controla si la app muestra la sección de horarios para esta emisora.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Mostrar sección de programación'),
+                    subtitle: Text(
+                      mostrarProgramacion ? 'Visible' : 'Oculta',
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                    value: mostrarProgramacion,
+                    onChanged: onMostrarProgramacionChanged,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
         const SizedBox(height: 16),
         Card(
           child: Padding(

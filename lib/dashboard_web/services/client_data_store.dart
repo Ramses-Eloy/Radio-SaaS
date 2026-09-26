@@ -33,6 +33,8 @@ class ClientDataStore extends ChangeNotifier {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _streamingsSub;
 
   ClientDashboardData? get data => _data;
+  /// Módulos activos de la marca (`marcas/{appId}.features`). Fuente única para todo el dashboard.
+  AppFeatures get features => _data?.features ?? const AppFeatures();
   String? get currentAppId => _currentAppId;
   String? get ownerEmail => _ownerEmail;
   String? get writeOwnerEmail => _writeOwnerEmail;

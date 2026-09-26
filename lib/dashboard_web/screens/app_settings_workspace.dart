@@ -361,6 +361,7 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
   }
 
   Widget _buildColumn1(ColorScheme scheme) {
+    final features = widget.dataStore.features;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -406,41 +407,39 @@ class _AppSettingsWorkspaceState extends State<AppSettingsWorkspace> {
                   'Botones de la pantalla principal',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _radioLabel,
-                        decoration: const InputDecoration(
-                          labelText: 'Texto del botón “Radio”',
-                          helperText: 'Nombre del botón de Radio en la página principal.',
-                          hintText: 'Ej. RADIO',
-                        ),
-                      ),
+                if (features.enableRadio) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _radioLabel,
+                    decoration: const InputDecoration(
+                      labelText: 'Texto del botón “Radio”',
+                      helperText: 'Nombre del botón de Radio en la página principal.',
+                      hintText: 'Ej. RADIO',
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _tvLabel,
-                        decoration: const InputDecoration(
-                          labelText: 'Texto del botón “TV / Video”',
-                          helperText: 'Nombre del botón de TV/Video en la página principal.',
-                          hintText: 'Ej. TV',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _scheduleLabel,
-                  decoration: const InputDecoration(
-                    labelText: 'Texto del botón “Programación”',
-                    helperText: 'Nombre del botón de Programación en la página principal.',
-                    hintText: 'Ej. Programación',
                   ),
-                ),
+                ],
+                if (features.enableTv) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _tvLabel,
+                    decoration: const InputDecoration(
+                      labelText: 'Texto del botón “TV / Video”',
+                      helperText: 'Nombre del botón de TV/Video en la página principal.',
+                      hintText: 'Ej. TV',
+                    ),
+                  ),
+                ],
+                if (features.enableSchedule) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _scheduleLabel,
+                    decoration: const InputDecoration(
+                      labelText: 'Texto del botón “Programación”',
+                      helperText: 'Nombre del botón de Programación en la página principal.',
+                      hintText: 'Ej. Programación',
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   'Imagen de marca',
