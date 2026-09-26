@@ -404,44 +404,66 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
   }
 
-  /// Botones de cabina. Con 'AM/FM', un número vacío o igual en ambas bandas
-  /// se muestra como un solo botón sin banda.
+  /// Botones de cabina. Con 'AM/FM' y números distintos por banda, el botón
+  /// abre un selector AM/FM; si uno está vacío o se repite, usa el otro directo.
   Widget _buildCabinaButtons(BuildContext context, ThemeConfig activeTheme, Station station) {
-    List<(String, String)> porBanda(String am, String fm) {
-      if (station.band != 'AM/FM') {
-        return [(station.band.isEmpty ? '' : ' ${station.band}', fm)];
+    Map<String, String> porBanda(String am, String fm) {
+      if (station.band == 'AM/FM' && am.isNotEmpty && fm.isNotEmpty && am != fm) {
+        return {'AM': am, 'FM': fm};
       }
-      if (am.isEmpty || fm.isEmpty || am == fm) return [('', fm.isEmpty ? am : fm)];
-      return [(' AM', am), (' FM', fm)];
+      return {'': fm.isEmpty ? am : fm};
     }
 
-    final buttons = [
-      for (final (suffix, n) in porBanda(station.whatsappNumberAm, station.whatsappNumber))
-        _cabinaButton(const Color(0xFF25D366), Icons.chat_bubble_outline, 'WhatsApp Cabina$suffix',
-            () => _launchWhatsApp(context, n)),
-      for (final (suffix, n) in porBanda(station.phoneNumberAm, station.phoneNumber))
-        _cabinaButton(activeTheme.primaryColor, Icons.phone_in_talk, 'Llamar a Cabina$suffix',
-            () => _launchPhoneCall(context, n)),
-    ];
+    final suffix = station.band.isEmpty || station.band == 'AM/FM' ? '' : ' ${station.band}';
 
-    // Filas de dos botones; si sobra uno, ocupa la fila entera.
-    return Column(
+    return Row(
       children: [
-        for (var i = 0; i < buttons.length; i += 2)
-          Padding(
-            padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
-            child: Row(
-              children: [
-                Expanded(child: buttons[i]),
-                if (i + 1 < buttons.length) ...[
-                  const SizedBox(width: 8),
-                  Expanded(child: buttons[i + 1]),
-                ],
-              ],
-            ),
+        Expanded(
+          child: _cabinaButton(
+            const Color(0xFF25D366),
+            Icons.chat_bubble_outline,
+            'WhatsApp Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.whatsappNumberAm, station.whatsappNumber),
+                (n) => _launchWhatsApp(context, n)),
           ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _cabinaButton(
+            activeTheme.primaryColor,
+            Icons.phone_in_talk,
+            'Llamar a Cabina$suffix',
+            () => _elegirBanda(context, porBanda(station.phoneNumberAm, station.phoneNumber),
+                (n) => _launchPhoneCall(context, n)),
+          ),
+        ),
       ],
     );
+  }
+
+  /// Con una sola opción la abre directo; con AM y FM pregunta cuál.
+  Future<void> _elegirBanda(BuildContext context, Map<String, String> opciones, void Function(String) abrir) async {
+    if (opciones.length == 1) {
+      abrir(opciones.values.first);
+      return;
+    }
+    final numero = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final e in opciones.entries)
+              ListTile(
+                leading: const Icon(Icons.settings_input_antenna),
+                title: Text('Cabina ${e.key}'),
+                onTap: () => Navigator.pop(ctx, e.value),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (numero != null && context.mounted) abrir(numero);
   }
 
   Widget _cabinaButton(Color color, IconData icon, String label, VoidCallback onPressed) {

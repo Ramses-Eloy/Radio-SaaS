@@ -709,7 +709,7 @@ class _ManagementTab extends StatelessWidget {
                   initialValue: banda,
                   decoration: const InputDecoration(
                     labelText: 'Banda de cabina',
-                    helperText: 'Con AM y FM la app muestra botones de cabina para cada banda.',
+                    helperText: 'Con AM y FM, al tocar WhatsApp o Llamar la app pregunta a qué cabina.',
                     prefixIcon: Icon(Icons.settings_input_antenna),
                   ),
                   items: const [
