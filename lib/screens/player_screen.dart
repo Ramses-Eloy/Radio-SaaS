@@ -351,7 +351,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                   decoration: BoxDecoration(
                     color: activeTheme.cardColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(
+                      color: stationProvider.isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Column(
                     children: [

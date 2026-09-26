@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../models/program.dart';
 import '../providers/station_provider.dart';
 
 class ScheduleScreen extends StatelessWidget {
@@ -12,7 +13,10 @@ class ScheduleScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final stationProvider = context.watch<StationProvider>();
     final activeTheme = stationProvider.activeThemeConfig;
-    final programs = stationProvider.currentStationPrograms;
+    // `mostrar_programacion` desactivado en el dashboard: no se publica la parrilla.
+    final programs = stationProvider.currentStation.showSchedule
+        ? stationProvider.currentStationPrograms
+        : const <Program>[];
     final liveIndex = programs.indexWhere((p) => p.isLiveNow);
     final dayName = _capitalize(DateFormat('EEEE', 'es').format(DateTime.now()));
 
@@ -22,7 +26,7 @@ class ScheduleScreen extends StatelessWidget {
         backgroundColor: activeTheme.backgroundColor,
         elevation: 0,
         title: Text(
-          'Parrilla de Programación',
+          stationProvider.scheduleLabel,
           style: TextStyle(
             color: activeTheme.primaryColor,
             fontWeight: FontWeight.bold,
@@ -33,6 +37,7 @@ class ScheduleScreen extends StatelessWidget {
           ? Center(
               child: Text(
                 'No hay programas agendados para hoy.',
+                textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[400]),
               ),
             )
@@ -46,7 +51,9 @@ class ScheduleScreen extends StatelessWidget {
                 final isPrevious = liveIndex != -1 && index == liveIndex - 1;
                 final isNext = liveIndex != -1 && index == liveIndex + 1;
                 
-                Color borderColor = Colors.white.withValues(alpha: 0.05);
+                Color borderColor = stationProvider.isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.08);
                 double borderWidth = 1;
                 
                 if (isLive) {

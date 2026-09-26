@@ -23,7 +23,7 @@ class VideoStreamScreen extends StatelessWidget {
         backgroundColor: activeTheme.backgroundColor,
         elevation: 0,
         title: Text(
-          'Streaming & TV en Vivo',
+          stationProvider.tvLabel,
           style: TextStyle(
             color: activeTheme.primaryColor,
             fontWeight: FontWeight.bold,

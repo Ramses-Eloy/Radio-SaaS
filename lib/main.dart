@@ -455,7 +455,7 @@ class _MainNavigationFrameState extends State<MainNavigationFrame>
               });
             },
             backgroundColor: activeTheme.cardColor,
-            selectedItemColor: Colors.amber,
+            selectedItemColor: activeTheme.primaryColor,
             unselectedItemColor: Colors.grey,
             selectedFontSize: 12,
             unselectedFontSize: 12,

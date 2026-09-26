@@ -27,9 +27,10 @@ class PersistentBottomBanner extends StatelessWidget {
 
     if (bannerUrl.isEmpty) return const SizedBox.shrink();
 
+    // Ancho completo y alto según la imagen (con tope), para no recortar el arte.
     return Container(
       width: double.infinity,
-      height: 75,
+      constraints: const BoxConstraints(minHeight: 50, maxHeight: 120),
       color: Colors.black,
       child: GestureDetector(
         onTap: () => _handleBannerClick(
@@ -40,8 +41,7 @@ class PersistentBottomBanner extends StatelessWidget {
         child: AppCachedImage(
           imageUrl: bannerUrl,
           width: double.infinity,
-          height: 75,
-          fit: BoxFit.cover,
+          fit: BoxFit.fitWidth,
           errorWidget: const SizedBox.shrink(),
         ),
       ),

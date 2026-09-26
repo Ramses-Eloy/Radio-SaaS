@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -14,6 +15,25 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get isPlaying => _isPlaying;
   bool get isLoading => _isLoading;
   String get currentStationName => _currentStationName;
+
+  // Temporizador de apagado. Vive aquí y no en Ajustes para que no se
+  // cancele al cambiar de pestaña.
+  Timer? _sleepTimer;
+  int _sleepMinutes = 0;
+  int get sleepMinutes => _sleepMinutes;
+
+  void setSleepTimer(int minutes, {VoidCallback? onFired}) {
+    _sleepTimer?.cancel();
+    _sleepMinutes = minutes;
+    if (minutes > 0) {
+      _sleepTimer = Timer(Duration(minutes: minutes), () {
+        _sleepMinutes = 0;
+        pause();
+        onFired?.call();
+      });
+    }
+    notifyListeners();
+  }
 
   AudioProvider() {
     WidgetsBinding.instance.addObserver(this);
@@ -161,6 +181,7 @@ class AudioProvider extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _sleepTimer?.cancel();
     _audioPlayer.dispose();
     super.dispose();
   }
