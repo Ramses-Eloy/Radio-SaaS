@@ -184,7 +184,7 @@ exports.createBrand = functions.https.onCall(async (data, context) => {
             banner_home_url: '',
             splash_enabled: true,
             splash_duration_sec: 5,
-            radio_label: 'En Vivo',
+            radio_label: 'Radio',
             tv_label: 'Video Live',
             schedule_label: 'Programación',
             features: features,
