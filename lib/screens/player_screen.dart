@@ -99,6 +99,11 @@ class _PlayerScreenState extends State<PlayerScreen>
     final activeTheme = stationProvider.activeThemeConfig;
     final logoStyle = LogoStyle.normalize(currentStation.logoStyle);
     final liveProgram = stationProvider.currentLiveProgram;
+    final programTitle = liveProgram?.title.trim() ?? '';
+    final slogan = currentStation.slogan.trim();
+    final infoTitle = programTitle.isNotEmpty ? programTitle : slogan;
+    final host = liveProgram?.hostName.trim() ?? '';
+    final infoSubtitle = host.isNotEmpty ? host : (programTitle.isNotEmpty ? slogan : '');
 
     if (stationProvider.isLoading) {
       return Scaffold(
@@ -160,7 +165,7 @@ class _PlayerScreenState extends State<PlayerScreen>
         actions: [
           IconButton(
             icon: Icon(
-              stationProvider.themeMode == ThemeMode.dark
+              stationProvider.isDark
                   ? Icons.wb_sunny_rounded
                   : Icons.dark_mode_rounded,
               color: activeTheme.primaryColor,
@@ -260,25 +265,29 @@ class _PlayerScreenState extends State<PlayerScreen>
 
                 const SizedBox(height: 20),
 
-                // Program / Show info
-                Text(
-                  liveProgram?.title ?? currentStation.slogan,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.titleLarge?.color,
+                // Programa al aire; si no hay, el eslogan. Campos vacíos no se pintan.
+                if (infoTitle.isNotEmpty)
+                  Text(
+                    infoTitle,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  liveProgram != null && liveProgram.hostName.isNotEmpty ? liveProgram.hostName : currentStation.slogan,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: activeTheme.primaryColor,
-                    fontWeight: FontWeight.w600,
+                if (infoSubtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    infoSubtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: activeTheme.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                ],
                 const SizedBox(height: 20),
 
                 // Audio Wave Visualizer

@@ -346,16 +346,17 @@ class StationProvider extends ChangeNotifier {
     );
   }
 
-  ThemeConfig get activeThemeConfig {
-    if (_themeMode == ThemeMode.system) {
-      final brightness = PlatformDispatcher.instance.platformBrightness;
-      return brightness == Brightness.dark ? currentStation.darkTheme : currentStation.lightTheme;
-    }
-    return _themeMode == ThemeMode.dark ? currentStation.darkTheme : currentStation.lightTheme;
-  }
+  /// Modo efectivo: con `system` usa el del teléfono.
+  bool get isDark => _themeMode == ThemeMode.system
+      ? PlatformDispatcher.instance.platformBrightness == Brightness.dark
+      : _themeMode == ThemeMode.dark;
+
+  ThemeConfig get activeThemeConfig =>
+      isDark ? currentStation.darkTheme : currentStation.lightTheme;
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    // Desde `system` el primer toque debe cambiar lo que se ve, no fijar el mismo modo.
+    _themeMode = isDark ? ThemeMode.light : ThemeMode.dark;
     _persistThemePreference();
     notifyListeners();
   }

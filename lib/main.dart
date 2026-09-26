@@ -207,7 +207,10 @@ class RadioWhiteLabelApp extends StatelessWidget {
             navigatorKey: appNavigatorKey,
             title: stationProvider.brandName,
             debugShowCheckedModeBanner: false,
-            themeMode: stationProvider.themeMode,
+            // Mismo modo que usan las pantallas (activeThemeConfig) y sin la
+            // animación de 200 ms: si no, el texto cambia después que el fondo.
+            themeMode: stationProvider.isDark ? ThemeMode.dark : ThemeMode.light,
+            themeAnimationDuration: Duration.zero,
             theme: ThemeData(
               useMaterial3: true,
               brightness: Brightness.light,
