@@ -20,10 +20,13 @@ class DashboardScreen extends StatefulWidget {
     super.key,
     required this.repository,
     required this.dataStore,
+    this.ownerEmail,
   });
 
   final EmisoraRepository repository;
   final ClientDataStore dataStore;
+  /// Superadmin abriendo el panel de una marca: correo de su dueño.
+  final String? ownerEmail;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -34,9 +37,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _selectedRadioId;
   String? _selectedStreamingId;
 
-  Future<void> _signOut() {
+  Future<void> _signOut() async {
     widget.dataStore.clear();
-    return FirebaseAuth.instance.signOut();
+    if (widget.ownerEmail != null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    await FirebaseAuth.instance.signOut();
   }
 
   void _selectRadio(String? id) => setState(() => _selectedRadioId = id);
@@ -45,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    final email = FirebaseAuth.instance.currentUser?.email?.trim().toLowerCase();
+    final email = (widget.ownerEmail ?? FirebaseAuth.instance.currentUser?.email)?.trim().toLowerCase();
     if (email != null && email.isNotEmpty) {
       widget.dataStore.ensureLoaded(email);
     }
@@ -57,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (user == null) {
       return const SizedBox.shrink();
     }
-    final ownerEmail = (user.email ?? '').trim().toLowerCase();
+    final ownerEmail = (widget.ownerEmail ?? user.email ?? '').trim().toLowerCase();
 
     final scheme = Theme.of(context).colorScheme;
 

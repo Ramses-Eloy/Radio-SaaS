@@ -52,7 +52,7 @@ class FirestoreService {
               : 'La mejor música',
           logoUrl: data['logo_url'] ?? '',
           logoStyle: data['logo_estilo'] ?? '',
-          streamUrl: _withScheme(data['url_audio'] ?? ''),
+          streamUrl: data['url_audio'] ?? '',
           videoStreamUrl: data['url_video'] ?? '',
           isLive: true,
           showSchedule: data['mostrar_programacion'] ?? true,
@@ -348,12 +348,5 @@ class FirestoreService {
       }
       return null;
     });
-  }
-
-  // "www.x.net:8090/stream" sin esquema: el reproductor toma "www.x.net" como
-  // protocolo y falla. Se asume https://.
-  static String _withScheme(String url) {
-    final u = url.trim();
-    return u.isEmpty || u.contains('://') ? u : 'https://$u';
   }
 }
