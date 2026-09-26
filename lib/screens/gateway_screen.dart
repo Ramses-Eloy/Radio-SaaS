@@ -192,8 +192,9 @@ class _GatewayScreenState extends State<GatewayScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _startTimer();
                 });
-                // La imagen completa sin recortes (contain); los huecos se
-                // rellenan con la misma imagen difuminada.
+                // Un 9:16 se ve completo a todo el ancho (contain). En pantallas
+                // más alargadas que 9:16 la franja de arriba/abajo es la misma
+                // imagen difuminada, así no queda un borde negro.
                 return Stack(
                   fit: StackFit.expand,
                   children: [
@@ -201,7 +202,7 @@ class _GatewayScreenState extends State<GatewayScreen> {
                       imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                       child: Image(image: imageProvider, fit: BoxFit.cover),
                     ),
-                    SafeArea(child: Image(image: imageProvider, fit: BoxFit.contain)),
+                    Image(image: imageProvider, fit: BoxFit.contain),
                   ],
                 );
               },

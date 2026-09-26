@@ -232,7 +232,7 @@ class _StationCard extends StatelessWidget {
             height: 52,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: Colors.white, // guía de activos: logo sobre blanco puro
               borderRadius: BorderRadius.circular(12),
             ),
             child: ClipRRect(
