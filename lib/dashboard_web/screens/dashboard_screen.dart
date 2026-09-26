@@ -163,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           selectedStreamingId: _selectedStreamingId,
           onSelectStreaming: _selectStreaming,
           onSignOut: _signOut,
-          features: data.features ?? const AppFeatures(),
+          features: store.features,
         );
 
         final content = Container(
@@ -184,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             dataStore: widget.dataStore,
             scheme: scheme,
             unknownIds: unknown,
-            features: data.features ?? const AppFeatures(),
+            features: store.features,
           ),
         );
 
