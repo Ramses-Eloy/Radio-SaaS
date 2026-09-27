@@ -178,6 +178,25 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
     );
   }
 
+  /// Rellena la hora fin vacía con el inicio del siguiente bloque del día.
+  /// El último bloque sin fin se queda vacío (la app lo muestra hasta las 23:59).
+  void _autoFillEndTimes() {
+    int minutes(TimeOfDay t) => t.hour * 60 + t.minute;
+    for (final rows in _rowsByDay.values) {
+      for (final row in rows) {
+        final start = row.startTime;
+        if (start == null || row.endTime != null) continue;
+        TimeOfDay? next;
+        for (final other in rows) {
+          final s = other.startTime;
+          if (s == null || minutes(s) <= minutes(start)) continue;
+          if (next == null || minutes(s) < minutes(next)) next = s;
+        }
+        row.endTime = next;
+      }
+    }
+  }
+
   void _addRow(String dayKey) {
     setState(() {
       _rowsByDay[dayKey]!.add(_RowControllers.empty());
@@ -293,6 +312,7 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
         _disposeRows(existing.where((r) => !keep.contains(r)).toList());
         _rowsByDay[entry.key] = [...keep, ...newRows];
       }
+      _autoFillEndTimes();
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -327,7 +347,10 @@ class _ProgramacionWorkspaceState extends State<ProgramacionWorkspace> with Sing
   Future<void> _save() async {
     final targetId = _targetId;
     if (targetId == null) return;
-    setState(() => _saving = true);
+    setState(() {
+      _autoFillEndTimes();
+      _saving = true;
+    });
     try {
       final tenant = TenantScope.require(
         appId: widget.appId,
