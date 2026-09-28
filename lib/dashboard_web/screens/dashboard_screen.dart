@@ -13,6 +13,7 @@ import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart'
 import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:radio_whitelabel/dashboard_web/widgets/brand_identity_header.dart';
+import 'package:radio_whitelabel/dashboard_web/widgets/kosmos_logo.dart';
 import 'package:radio_whitelabel/models/app_features.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -173,7 +174,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           features: store.features,
         );
 
-        final content = Container(
+        final page = Container(
           color: scheme.surface,
           child: _Body(
             sectionIndex: _sectionIndex,
@@ -192,6 +193,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             scheme: scheme,
             unknownIds: unknown,
             features: store.features,
+          ),
+        );
+        final content = AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: SlideTransition(
+              position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(anim),
+              child: child,
+            ),
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(_sectionIndex),
+            child: page,
           ),
         );
 
@@ -528,31 +544,6 @@ class _Sidebar extends StatelessWidget {
                   ],
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-              child: Card(
-                child: ValueListenableBuilder<ThemeMode>(
-                  valueListenable: themeModeNotifier,
-                  builder: (context, mode, _) {
-                    final isDark = mode == ThemeMode.dark;
-                    return SwitchListTile.adaptive(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      title: const Text('Modo oscuro'),
-                      subtitle: Text(
-                        isDark ? 'Activado' : 'Desactivado',
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                      value: isDark,
-                      onChanged: (v) async {
-                        final next = v ? ThemeMode.dark : ThemeMode.light;
-                        themeModeNotifier.value = next;
-                        await persistThemePreference(next);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -653,12 +644,34 @@ class _Sidebar extends StatelessWidget {
               const SizedBox(height: 8),
             ],
             const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Cerrar sesión'),
-              onTap: onSignOut,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ListTile(
+                      leading: const Icon(Icons.logout),
+                      title: const Text('Cerrar sesión'),
+                      onTap: onSignOut,
+                    ),
+                  ),
+                  const _ThemeToggle(),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+              child: Row(
+                children: [
+                  const KosmosLogo(size: 16, showName: false),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Powered by Kosmos',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -743,16 +756,46 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: selected ? scheme.primaryContainer.withValues(alpha: 0.5) : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: selected ? scheme.primary.withValues(alpha: 0.14) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border(left: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 3)),
+      ),
       child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(icon),
-        title: Text(label),
+        leading: Icon(icon, color: selected ? scheme.primary : null),
+        title: Text(
+          label,
+          style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
+        ),
         selected: selected,
         onTap: onTap,
       ),
+    );
+  }
+}
+
+/// Botón sol/luna para cambiar entre modo claro y oscuro.
+class _ThemeToggle extends StatelessWidget {
+  const _ThemeToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeModeNotifier,
+      builder: (context, mode, _) {
+        final isDark = mode == ThemeMode.dark;
+        return IconButton(
+          tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+          icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+          onPressed: () async {
+            final next = isDark ? ThemeMode.light : ThemeMode.dark;
+            themeModeNotifier.value = next;
+            await persistThemePreference(next);
+          },
+        );
+      },
     );
   }
 }

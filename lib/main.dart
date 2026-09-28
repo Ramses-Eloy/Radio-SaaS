@@ -45,11 +45,11 @@ class _WebApp extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         return MaterialApp(
-          title: 'Dashboard Administrativo',
+          title: 'Kosmos Console',
           debugShowCheckedModeBanner: false,
           themeMode: mode,
-          theme: buildAppTheme(const Color(0xFF0284C7)),
-          darkTheme: buildDarkTheme(const Color(0xFF0284C7)),
+          theme: buildAppTheme(),
+          darkTheme: buildDarkTheme(),
           home: const AdminDashboardScreen(),
         );
       },
