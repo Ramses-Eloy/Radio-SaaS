@@ -508,18 +508,10 @@ class _Sidebar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (prefix != null)
-              Row(
-                children: [
-                  Expanded(
-                    child: BrandIdentityHeader(
-                      dataStore: dataStore,
-                      userEmail: userEmail,
-                      compact: true,
-                    ),
-                  ),
-                  const _ThemeToggle(),
-                  const SizedBox(width: 8),
-                ],
+              BrandIdentityHeader(
+                dataStore: dataStore,
+                userEmail: userEmail,
+                compact: true,
               )
             else
               Padding(
@@ -647,22 +639,27 @@ class _Sidebar extends StatelessWidget {
                         },
                       ),
               ),
-            ] else ...[
-              const Divider(height: 1),
-              const SizedBox(height: 8),
-            ],
+            ] else
+              // Empuja el pie (modo, cerrar sesión, logo) al fondo en todas las secciones.
+              const Spacer(),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Cerrar sesión'),
-                onTap: onSignOut,
+              child: Column(
+                children: [
+                  const _ThemeToggle(),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Cerrar sesión'),
+                    onTap: onSignOut,
+                  ),
+                ],
               ),
             ),
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: KosmosWordmark(height: 18),
+              padding: EdgeInsets.fromLTRB(20, 6, 20, 14),
+              child: KosmosWordmark(height: 12),
             ),
           ],
         ),
@@ -768,7 +765,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Botón junto al nombre de la marca para cambiar entre modo claro y oscuro.
+/// Interruptor de modo oscuro en el pie del menú.
 class _ThemeToggle extends StatelessWidget {
   const _ThemeToggle();
 
@@ -778,12 +775,13 @@ class _ThemeToggle extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         final isDark = mode == ThemeMode.dark;
-        return IconButton(
-          tooltip: isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
-          // brightness_* existen en todas las versiones de la fuente de iconos (light_mode no se veía).
-          icon: Icon(isDark ? Icons.brightness_7 : Icons.brightness_4),
-          onPressed: () async {
-            final next = isDark ? ThemeMode.light : ThemeMode.dark;
+        return SwitchListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          title: const Text('Modo oscuro'),
+          value: isDark,
+          onChanged: (v) async {
+            final next = v ? ThemeMode.dark : ThemeMode.light;
             themeModeNotifier.value = next;
             await persistThemePreference(next);
           },
