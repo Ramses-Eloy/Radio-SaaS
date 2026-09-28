@@ -1,11 +1,11 @@
 {
-    "name": "Dashboard Administrativo",
-    "short_name": "Dashboard",
+    "name": "Kosmos Console",
+    "short_name": "Kosmos",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#090D16",
+    "theme_color": "#090D16",
+    "description": "Panel de administración de emisoras Kosmos.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

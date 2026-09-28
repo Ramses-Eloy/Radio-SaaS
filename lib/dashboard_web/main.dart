@@ -62,7 +62,6 @@ Future<void> main() async {
 /// Raíz del dashboard: Material 3, tema claro, sin banner de debug en release.
 class RadioAdminApp extends StatelessWidget {
   const RadioAdminApp({super.key});
-  static const Color _dashboardSeed = Color(0xFF1E3A5F);
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +69,10 @@ class RadioAdminApp extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         return MaterialApp(
-          title: 'Dashboard Administrativo',
+          title: 'Kosmos Console',
           debugShowCheckedModeBanner: false,
-          theme: buildAppTheme(_dashboardSeed),
-          darkTheme: buildDarkTheme(_dashboardSeed),
+          theme: buildAppTheme(),
+          darkTheme: buildDarkTheme(),
           themeMode: mode,
           home: const _AuthGate(),
         );

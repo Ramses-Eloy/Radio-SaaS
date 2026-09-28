@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:radio_whitelabel/dashboard_web/widgets/kosmos_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,13 +61,16 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
+          color: scheme.surface,
           gradient: RadialGradient(
-            center: Alignment.topRight,
-            radius: 1.5,
+            center: const Alignment(0.9, -0.9),
+            radius: 1.4,
             colors: [
-              scheme.primary.withValues(alpha: 0.15),
+              scheme.primary.withValues(alpha: 0.28),
+              scheme.primary.withValues(alpha: 0.06),
               scheme.surface,
             ],
+            stops: const [0, 0.45, 1],
           ),
         ),
         child: Center(
@@ -75,8 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Card(
-                elevation: 12,
-                shadowColor: Colors.black.withValues(alpha: 0.5),
+                elevation: 24,
+                shadowColor: scheme.primary.withValues(alpha: 0.18),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                   side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.3)),
@@ -89,19 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Center(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              'dash.png',
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.podcasts, size: 64, color: scheme.primary),
-                            ),
-                          ),
-                        ),
+                        const Center(child: KosmosLogo(size: 56, subtitle: 'CONSOLE')),
                         const SizedBox(height: 24),
                         Text(
                           'Bienvenido de vuelta',
