@@ -387,6 +387,9 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
           SizedBox(
             height: 300,
             child: LineChart(
+              // Clave por rango: al cambiar 24H/7D/30D se redibuja en vez de interpolar
+              // entre series de distinto largo (la línea entraba desde fuera del cuadro).
+              key: ValueKey(_timeFilter),
               LineChartData(
                 minX: 0,
                 maxX: spots.length > 1 ? (spots.length - 1).toDouble() : 1,
