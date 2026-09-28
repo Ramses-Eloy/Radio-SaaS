@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// Azul de Kosmos: color por defecto del panel (login, superadmin, marcas sin color).
 const Color kosmosBlue = Color(0xFF1E6BFF);
 
-/// Tema claro. [seed] es el color de la marca; así cada dueño ve su panel con su color.
+/// Tema claro. Todo el panel usa el azul de Kosmos.
 ThemeData buildAppTheme([Color seed = kosmosBlue]) {
   final scheme = ColorScheme.fromSeed(
     seedColor: seed,

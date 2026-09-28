@@ -10,7 +10,6 @@ import 'package:radio_whitelabel/dashboard_web/screens/programacion_workspace.da
 import 'package:radio_whitelabel/dashboard_web/screens/streaming_workspace.dart';
 import 'package:radio_whitelabel/dashboard_web/services/client_data_store.dart';
 import 'package:radio_whitelabel/dashboard_web/services/emisora_repository.dart';
-import 'package:radio_whitelabel/dashboard_web/theme/app_theme.dart';
 import 'package:radio_whitelabel/dashboard_web/theme/theme_controller.dart';
 import 'package:radio_whitelabel/dashboard_web/utils/color_hex.dart';
 import 'package:radio_whitelabel/dashboard_web/widgets/brand_identity_header.dart';
@@ -38,17 +37,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _sectionIndex = 0; // 0 = Ajustes, 1 = Radios, 2 = Streamings, 3 = Programacion, 4 = Estadisticas
   String? _selectedRadioId;
   String? _selectedStreamingId;
-  (Color, Brightness)? _themeKey;
-  ThemeData? _brandTheme;
-
-  /// Tema con el color de la marca (o de su primera emisora). Se cachea: construirlo en cada rebuild es caro.
-  ThemeData _themeFor(Color seed, Brightness b) {
-    if (_themeKey != (seed, b)) {
-      _themeKey = (seed, b);
-      _brandTheme = b == Brightness.dark ? buildDarkTheme(seed) : buildAppTheme(seed);
-    }
-    return _brandTheme!;
-  }
 
   Future<void> _signOut() async {
     widget.dataStore.clear();
@@ -139,10 +127,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final radios = data.radios;
         final streamings = data.streamings;
         final unknown = data.unknownIds;
-        final brandSeed = ColorHex.tryParse(info?.colorHex) ??
-            (radios.isNotEmpty ? ColorHex.tryParse(radios.first.colorHex) : null) ??
-            kosmosBlue;
-        final brandTheme = _themeFor(brandSeed, Theme.of(context).brightness);
 
         if (_selectedRadioId != null && !radios.any((r) => r.id == _selectedRadioId)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -191,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
 
         final page = Container(
-          color: brandTheme.colorScheme.surface,
+          color: scheme.surface,
           child: _Body(
             sectionIndex: _sectionIndex,
             ownerEmail: ownerEmail,
@@ -206,7 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onSelectStreaming: _selectStreaming,
             repository: widget.repository,
             dataStore: widget.dataStore,
-            scheme: brandTheme.colorScheme,
+            scheme: scheme,
             unknownIds: unknown,
             features: store.features,
           ),
@@ -227,9 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         );
 
-        return Theme(
-          data: brandTheme,
-          child: LayoutBuilder(
+        return LayoutBuilder(
           builder: (context, constraints) {
             final isMobile = constraints.maxWidth < 960;
             if (isMobile) {
@@ -264,7 +246,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           },
-          ),
         );
       },
     );
