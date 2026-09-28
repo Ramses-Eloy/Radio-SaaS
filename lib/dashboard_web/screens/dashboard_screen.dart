@@ -508,10 +508,18 @@ class _Sidebar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (prefix != null)
-              BrandIdentityHeader(
-                dataStore: dataStore,
-                userEmail: userEmail,
-                compact: true,
+              Row(
+                children: [
+                  Expanded(
+                    child: BrandIdentityHeader(
+                      dataStore: dataStore,
+                      userEmail: userEmail,
+                      compact: true,
+                    ),
+                  ),
+                  const _ThemeToggle(),
+                  const SizedBox(width: 8),
+                ],
               )
             else
               Padding(
@@ -646,15 +654,10 @@ class _Sidebar extends StatelessWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Column(
-                children: [
-                  const _ThemeToggle(),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Cerrar sesión'),
-                    onTap: onSignOut,
-                  ),
-                ],
+              child: ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Cerrar sesión'),
+                onTap: onSignOut,
               ),
             ),
             const Padding(
@@ -765,7 +768,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Opción del menú para cambiar entre modo claro y oscuro.
+/// Botón junto al nombre de la marca para cambiar entre modo claro y oscuro.
 class _ThemeToggle extends StatelessWidget {
   const _ThemeToggle();
 
@@ -775,10 +778,11 @@ class _ThemeToggle extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         final isDark = mode == ThemeMode.dark;
-        return ListTile(
-          leading: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-          title: Text(isDark ? 'Modo claro' : 'Modo oscuro'),
-          onTap: () async {
+        return IconButton(
+          tooltip: isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
+          // brightness_* existen en todas las versiones de la fuente de iconos (light_mode no se veía).
+          icon: Icon(isDark ? Icons.brightness_7 : Icons.brightness_4),
+          onPressed: () async {
             final next = isDark ? ThemeMode.light : ThemeMode.dark;
             themeModeNotifier.value = next;
             await persistThemePreference(next);
