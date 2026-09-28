@@ -386,7 +386,10 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
           const SizedBox(height: 32),
           SizedBox(
             height: 300,
+            // Key por filtro/nº de puntos: sin ella fl_chart interpola entre series distintas
+            // y la curva entra "volando" desde la derecha fuera de la tarjeta.
             child: LineChart(
+              key: ValueKey('$_timeFilter-${spots.length}'),
               LineChartData(
                 minX: 0,
                 maxX: spots.length > 1 ? (spots.length - 1).toDouble() : 1,
