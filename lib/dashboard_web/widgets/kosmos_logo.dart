@@ -56,3 +56,21 @@ class KosmosLogo extends StatelessWidget {
     );
   }
 }
+
+/// Logotipo "KOSMOS" escrito (PNG en `web/branding/`), en versión clara u oscura según el tema.
+class KosmosWordmark extends StatelessWidget {
+  const KosmosWordmark({super.key, this.height = 20});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Image.network(
+      isDark ? 'branding/kosmos-wordmark-light.png' : 'branding/kosmos-wordmark.png',
+      height: height,
+      alignment: Alignment.centerLeft,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
+}

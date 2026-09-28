@@ -646,31 +646,20 @@ class _Sidebar extends StatelessWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: const Text('Cerrar sesión'),
-                      onTap: onSignOut,
-                    ),
-                  ),
                   const _ThemeToggle(),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Cerrar sesión'),
+                    onTap: onSignOut,
+                  ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
-              child: Row(
-                children: [
-                  const KosmosLogo(size: 16, showName: false),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Powered by Kosmos',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: KosmosWordmark(height: 18),
             ),
           ],
         ),
@@ -776,7 +765,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Botón sol/luna para cambiar entre modo claro y oscuro.
+/// Opción del menú para cambiar entre modo claro y oscuro.
 class _ThemeToggle extends StatelessWidget {
   const _ThemeToggle();
 
@@ -786,10 +775,10 @@ class _ThemeToggle extends StatelessWidget {
       valueListenable: themeModeNotifier,
       builder: (context, mode, _) {
         final isDark = mode == ThemeMode.dark;
-        return IconButton(
-          tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
-          icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-          onPressed: () async {
+        return ListTile(
+          leading: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+          title: Text(isDark ? 'Modo claro' : 'Modo oscuro'),
+          onTap: () async {
             final next = isDark ? ThemeMode.light : ThemeMode.dark;
             themeModeNotifier.value = next;
             await persistThemePreference(next);

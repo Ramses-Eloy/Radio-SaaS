@@ -210,6 +210,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
             LineChartBarData(
               spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
               isCurved: true,
+              preventCurveOverShooting: true,
               color: color,
               barWidth: 2,
               dotData: const FlDotData(show: false),
@@ -309,6 +310,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
 
     // Build spots from aggregated hourly data
     List<FlSpot> spots;
+    List<String> dayLabels = const [];
     if (_stats != null && _stats!.dailyBreakdown.isNotEmpty) {
       if (_daysForFilter == 1) {
         // Hourly chart for today (0-23h)
@@ -320,6 +322,11 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
       } else {
         // Daily chart (one point per day, newest first so reverse)
         final days = _stats!.dailyBreakdown.reversed.toList();
+        // 'YYYY-MM-DD' → 'DD/MM'
+        dayLabels = days.map((d) {
+          final p = d.date.split('-');
+          return p.length == 3 ? '${p[2]}/${p[1]}' : d.date;
+        }).toList();
         spots = List.generate(days.length, (i) {
           return FlSpot(i.toDouble(), days[i].totalPlays.toDouble());
         });
@@ -327,6 +334,8 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
     } else {
       spots = List.generate(24, (i) => FlSpot(i.toDouble(), 0));
     }
+    final peak = spots.fold<double>(0, (m, s) => s.y > m ? s.y : m);
+    final maxY = peak <= 0 ? 4.0 : (peak * 1.2).ceilToDouble();
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -378,7 +387,15 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
           SizedBox(
             height: 300,
             child: LineChart(
+              // Clave por rango: al cambiar 24H/7D/30D se redibuja en vez de interpolar
+              // entre series de distinto largo (la línea entraba desde fuera del cuadro).
+              key: ValueKey(_timeFilter),
               LineChartData(
+                minX: 0,
+                maxX: spots.length > 1 ? (spots.length - 1).toDouble() : 1,
+                minY: 0,
+                maxY: maxY,
+                clipData: const FlClipData.all(),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -395,12 +412,16 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: _timeFilter == '24H' ? 6 : (_timeFilter == '7D' ? 1 : 10),
+                      interval: dayLabels.isEmpty ? 6 : (dayLabels.length <= 7 ? 1 : 5),
                       getTitlesWidget: (val, meta) {
+                        final i = val.toInt();
+                        if (val != i || (dayLabels.isNotEmpty && i >= dayLabels.length)) {
+                          return const SizedBox.shrink();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            '${val.toInt()}${_timeFilter == '7D' ? 'd' : ':00'}',
+                            dayLabels.isEmpty ? '$i:00' : dayLabels[i],
                             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
                           ),
                         );
@@ -410,12 +431,12 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 50,
+                      interval: maxY / 4,
                       reservedSize: 42,
                       getTitlesWidget: (val, meta) {
                         if (val == 0) return const SizedBox.shrink();
                         return Text(
-                          '${val.toInt()}k',
+                          '${val.round()}',
                           style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
                         );
                       },
@@ -427,6 +448,7 @@ class _EstadisticasWorkspaceState extends State<EstadisticasWorkspace> {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
+                    preventCurveOverShooting: true,
                     color: scheme.primary,
                     barWidth: 3,
                     isStrokeCapRound: true,
